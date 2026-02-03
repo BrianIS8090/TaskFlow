@@ -162,6 +162,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </button>
               </div>
             )}
+            <div className="text-xs text-white/30 text-center mt-4">
+              v{__APP_VERSION__}
+            </div>
           </div>
         </div>
       </aside>
