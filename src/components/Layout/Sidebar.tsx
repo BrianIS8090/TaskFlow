@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Check, User as UserIcon, LogOut, LogIn } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, User as UserIcon, LogOut, LogIn, Search } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, isToday } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useAuth } from '../../context/AuthContext';
@@ -11,13 +11,15 @@ interface SidebarProps {
   onDateSelect: (date: Date) => void;
   isMobileOpen: boolean;
   onCloseMobile: () => void;
+  onSearchOpen: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
   selectedDate, 
   onDateSelect, 
   isMobileOpen, 
-  onCloseMobile
+  onCloseMobile,
+  onSearchOpen
 }) => {
   const [calendarDate, setCalendarDate] = useState(new Date(2026, 1, 1));
   const [showLogin, setShowLogin] = useState(false);
@@ -145,6 +147,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
               })}
             </div>
           </div>
+
+          {/* Search Button */}
+          <button
+            onClick={() => {
+              onSearchOpen();
+              onCloseMobile();
+            }}
+            className="w-full glass rounded-xl p-3 mb-4 flex items-center gap-3 text-white/40 hover:text-white/60 hover:bg-white/[0.07] transition-all"
+          >
+            <Search className="w-4 h-4" />
+            <span className="text-sm">Поиск задач...</span>
+          </button>
 
           {/* User Actions */}
           <div className="mt-auto pt-4 border-t border-white/10">

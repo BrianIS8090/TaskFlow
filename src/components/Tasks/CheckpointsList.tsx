@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Check, Trash2, Plus } from 'lucide-react';
 import type { Checkpoint } from '../../types';
+import { ConfirmDialog } from '../UI/ConfirmDialog';
 
 interface CheckpointsListProps {
   checkpoints: Checkpoint[];
@@ -16,6 +17,7 @@ export const CheckpointsList: React.FC<CheckpointsListProps> = ({
   onAdd
 }) => {
   const [newText, setNewText] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; checkpointId: string | number | null; text: string }>({ isOpen: false, checkpointId: null, text: '' });
 
   const handleAdd = () => {
     if (newText.trim()) {
@@ -42,11 +44,7 @@ export const CheckpointsList: React.FC<CheckpointsListProps> = ({
             {cp.text}
           </span>
           <button
-            onClick={() => {
-              if (window.confirm('Удалить чекпоинт?')) {
-                onDelete(cp.id);
-              }
-            }}
+            onClick={() => setDeleteConfirm({ isOpen: true, checkpointId: cp.id, text: cp.text })}
             className="w-6 h-6 rounded-md flex items-center justify-center text-white/30 hover:text-red-400 hover:bg-red-500/20 opacity-0 group-hover:opacity-100 transition-all"
           >
             <Trash2 className="w-3 h-3" />
@@ -68,6 +66,20 @@ export const CheckpointsList: React.FC<CheckpointsListProps> = ({
           className="flex-1 bg-transparent text-sm text-white/70 placeholder-white/30 outline-none"
         />
       </div>
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        title="Удалить чекпоинт?"
+        message={`Чекпоинт "${deleteConfirm.text}" будет удалён.`}
+        confirmText="Удалить"
+        onConfirm={() => {
+          if (deleteConfirm.checkpointId !== null) {
+            onDelete(deleteConfirm.checkpointId);
+          }
+          setDeleteConfirm({ isOpen: false, checkpointId: null, text: '' });
+        }}
+        onCancel={() => setDeleteConfirm({ isOpen: false, checkpointId: null, text: '' })}
+      />
     </div>
   );
 };

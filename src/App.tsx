@@ -4,7 +4,7 @@ import { TaskItem } from './components/Tasks/TaskItem';
 import { LoginForm } from './components/Auth/LoginForm';
 import { useTasks } from './hooks/useTasks';
 import { useAuth } from './context/AuthContext';
-import { Plus, Calendar as CalendarIcon, Loader2, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SearchModal } from './components/Search/SearchModal';
 import { format, isToday, addDays, subDays } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -73,6 +73,7 @@ function App() {
         onDateSelect={setSelectedDate}
         isMobileOpen={isMobileMenuOpen}
         onCloseMobile={() => setIsMobileMenuOpen(false)}
+        onSearchOpen={() => setIsSearchOpen(true)}
       />
 
       <main className="flex-1 p-4 lg:p-8 relative overflow-y-auto">
@@ -108,24 +109,24 @@ function App() {
 
         {/* Date Header */}
         <div className="hidden lg:block mb-8 animate-fade-in">
-          <div className="flex items-center gap-4 mb-1">
+          <div className="flex items-center justify-center gap-10 mb-1">
             <button
               onClick={() => setSelectedDate(subDays(selectedDate, 1))}
-              className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/15 transition-all"
+              className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/15 transition-all"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-3xl font-semibold text-white capitalize">
+            <h1 className="text-3xl font-semibold text-white capitalize min-w-[180px] text-center">
               {isToday(selectedDate) ? 'Сегодня' : format(selectedDate, 'd MMMM', { locale: ru })}
             </h1>
             <button
               onClick={() => setSelectedDate(addDays(selectedDate, 1))}
-              className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/15 transition-all"
+              className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/15 transition-all"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-5 h-5" />
             </button>
           </div>
-          <p className="text-white/50 h-6">
+          <p className="text-white/50 h-6 text-center">
             {tasksLoading ? (
               <span className="animate-pulse">Загрузка задач...</span>
             ) : (
@@ -135,15 +136,6 @@ function App() {
             )}
           </p>
         </div>
-
-        {/* Search Button */}
-        <button
-          onClick={() => setIsSearchOpen(true)}
-          className="glass rounded-2xl p-4 mb-4 w-full flex items-center gap-3 text-white/40 hover:text-white/60 hover:bg-white/[0.07] transition-all"
-        >
-          <Search className="w-5 h-5" />
-          <span>Поиск задач...</span>
-        </button>
 
         {/* Add Task */}
         <div className="glass rounded-2xl p-4 mb-6">

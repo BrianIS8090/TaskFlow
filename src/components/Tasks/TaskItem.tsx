@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Check, ChevronRight, Pencil, ArrowRight, Trash2, X, MoreVertical } from 'lucide-react';
 import type { Task } from '../../types';
 import { CheckpointsList } from './CheckpointsList';
@@ -34,11 +35,14 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
 
   // Закрытие меню при клике вне его
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node) &&
+          buttonRef.current && !buttonRef.current.contains(event.target as Node)) {
         setShowMobileMenu(false);
       }
     };
@@ -47,6 +51,18 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showMobileMenu]);
+
+  // Обновление позиции меню
+  const handleOpenMenu = () => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setMenuPosition({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right
+      });
+    }
+    setShowMobileMenu(!showMobileMenu);
+  };
 
   const handleSave = () => {
     if (editValue.trim()) {
@@ -175,16 +191,21 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         </div>
 
         {/* Mobile бургер-меню */}
-        <div className="lg:hidden relative" ref={menuRef}>
+        <div className="lg:hidden">
           <button
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            ref={buttonRef}
+            onClick={handleOpenMenu}
             className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/15 transition-all"
           >
             <MoreVertical className="w-4 h-4" />
           </button>
 
-          {showMobileMenu && (
-            <div className="absolute right-0 top-10 z-20 glass rounded-xl py-2 min-w-[160px] shadow-xl animate-fade-in">
+          {showMobileMenu && createPortal(
+            <div 
+              ref={menuRef}
+              className="fixed z-[100] glass rounded-xl py-2 min-w-[160px] shadow-xl animate-fade-in"
+              style={{ top: menuPosition.top, right: menuPosition.right }}
+            >
               {!task.completed && (
                 <>
                   <button
@@ -219,7 +240,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                 <Trash2 className="w-4 h-4" />
                 Удалить
               </button>
-            </div>
+            </div>,
+            document.body
           )}
         </div>
       </div>
