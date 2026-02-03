@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Check, ChevronRight, Pencil, ArrowRight, Trash2, X } from 'lucide-react';
 import type { Task } from '../../types';
 import { CheckpointsList } from './CheckpointsList';
+import { ConfirmDialog } from '../UI/ConfirmDialog';
 
 interface TaskItemProps {
   task: Task;
@@ -30,6 +31,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(task.title);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleSave = () => {
     if (editValue.trim()) {
@@ -148,7 +150,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
             </>
           )}
           <button
-            onClick={onDelete}
+            onClick={() => setShowDeleteConfirm(true)}
             className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/50 hover:text-red-400 hover:bg-red-500/20 transition-all"
             title="Удалить"
           >
@@ -156,6 +158,18 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           </button>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Удалить задачу?"
+        message={`Задача "${task.title}" будет удалена безвозвратно.`}
+        confirmText="Удалить"
+        onConfirm={() => {
+          setShowDeleteConfirm(false);
+          onDelete();
+        }}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   );
 };
