@@ -81,6 +81,14 @@ class MockTaskRepository implements TaskRepository {
     return result;
   }
 
+  async getAllTasks(): Promise<Task[]> {
+    const result: Task[] = [];
+    for (const date in this.tasks) {
+      result.push(...this.tasks[date]);
+    }
+    return result.sort((a, b) => b.date.localeCompare(a.date));
+  }
+
   private notify(date: string) {
     if (this.listeners[date]) {
       const tasks = this.tasks[date] || [];
