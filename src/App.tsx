@@ -4,8 +4,8 @@ import { TaskItem } from './components/Tasks/TaskItem';
 import { LoginForm } from './components/Auth/LoginForm';
 import { useTasks } from './hooks/useTasks';
 import { useAuth } from './context/AuthContext';
-import { Plus, Calendar as CalendarIcon, Loader2 } from 'lucide-react';
-import { format, isToday } from 'date-fns';
+import { Plus, Calendar as CalendarIcon, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { format, isToday, addDays, subDays } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
 function App() {
@@ -82,8 +82,22 @@ function App() {
           >
             <CalendarIcon className="w-5 h-5" />
           </button>
-          <div className="text-white font-medium capitalize">
-            {format(selectedDate, 'd MMMM', { locale: ru })}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSelectedDate(subDays(selectedDate, 1))}
+              className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/15 transition-all"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="text-white font-medium capitalize min-w-[100px] text-center">
+              {isToday(selectedDate) ? 'Сегодня' : format(selectedDate, 'd MMMM', { locale: ru })}
+            </div>
+            <button
+              onClick={() => setSelectedDate(addDays(selectedDate, 1))}
+              className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/15 transition-all"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-medium">
             {user.displayName ? user.displayName[0].toUpperCase() : 'U'}
@@ -92,9 +106,23 @@ function App() {
 
         {/* Date Header */}
         <div className="hidden lg:block mb-8 animate-fade-in">
-          <h1 className="text-3xl font-semibold text-white mb-1 capitalize">
-            {isToday(selectedDate) ? 'Сегодня' : format(selectedDate, 'd MMMM', { locale: ru })}
-          </h1>
+          <div className="flex items-center gap-4 mb-1">
+            <button
+              onClick={() => setSelectedDate(subDays(selectedDate, 1))}
+              className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/15 transition-all"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <h1 className="text-3xl font-semibold text-white capitalize">
+              {isToday(selectedDate) ? 'Сегодня' : format(selectedDate, 'd MMMM', { locale: ru })}
+            </h1>
+            <button
+              onClick={() => setSelectedDate(addDays(selectedDate, 1))}
+              className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/15 transition-all"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
           <p className="text-white/50 h-6">
             {tasksLoading ? (
               <span className="animate-pulse">Загрузка задач...</span>
