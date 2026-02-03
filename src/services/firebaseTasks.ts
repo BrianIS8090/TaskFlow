@@ -90,6 +90,15 @@ class FirebaseTaskRepository implements TaskRepository {
       ...doc.data()
     } as Task));
   }
+
+  async getAllTasks(): Promise<Task[]> {
+    const q = query(this.getCollection(), orderBy('date', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Task));
+  }
 }
 
 export const createFirebaseRepository = (userId: string) => new FirebaseTaskRepository(userId);

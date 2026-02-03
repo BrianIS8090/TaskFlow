@@ -30,4 +30,5 @@ export interface TaskRepository {
   deleteTask(id: string | number): Promise<void>;
   onTasksChange(date: string, callback: (tasks: Task[]) => void): () => void;
   getTasksForMonth(year: number, month: number): Promise<Task[]>;
+  getAllTasks(): Promise<Task[]>;
 }

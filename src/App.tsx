@@ -4,7 +4,8 @@ import { TaskItem } from './components/Tasks/TaskItem';
 import { LoginForm } from './components/Auth/LoginForm';
 import { useTasks } from './hooks/useTasks';
 import { useAuth } from './context/AuthContext';
-import { Plus, Calendar as CalendarIcon, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, Loader2, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { SearchModal } from './components/Search/SearchModal';
 import { format, isToday, addDays, subDays } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -14,6 +15,7 @@ function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [newTaskText, setNewTaskText] = useState('');
   const [expandedTaskId, setExpandedTaskId] = useState<string | number | null>(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const dateKey = format(selectedDate, 'yyyy-MM-dd');
   
@@ -134,6 +136,15 @@ function App() {
           </p>
         </div>
 
+        {/* Search Button */}
+        <button
+          onClick={() => setIsSearchOpen(true)}
+          className="glass rounded-2xl p-4 mb-4 w-full flex items-center gap-3 text-white/40 hover:text-white/60 hover:bg-white/[0.07] transition-all"
+        >
+          <Search className="w-5 h-5" />
+          <span>Поиск задач...</span>
+        </button>
+
         {/* Add Task */}
         <div className="glass rounded-2xl p-4 mb-6">
           <div className="flex gap-3">
@@ -215,6 +226,12 @@ function App() {
           )}
         </div>
       </main>
+
+      <SearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        onSelectDate={setSelectedDate}
+      />
     </div>
   );
 }
