@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@theme {
+  --color-accent: var(--color-blue-500);
+  --color-success: var(--color-green-500);
+  --color-warning: var(--color-orange-400);
+}
+
+:root {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  @apply bg-slate-900 text-white min-h-screen overflow-x-hidden;
+}
+
+/* Glassmorphism utility */
+.glass {
+  @apply backdrop-blur-xl bg-white/5 border border-white/10;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
