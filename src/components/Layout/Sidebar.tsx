@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Check, User as UserIcon, LogOut, LogIn, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, User as UserIcon, LogOut, LogIn, Search, Sun, Moon } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, isToday } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { LoginForm } from '../Auth/LoginForm';
 import { useCalendarStats } from '../../hooks/useCalendarStats';
 
@@ -24,6 +25,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [calendarDate, setCalendarDate] = useState(new Date(2026, 1, 1));
   const [showLogin, setShowLogin] = useState(false);
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   
   const { getDayStats } = useCalendarStats(calendarDate.getFullYear(), calendarDate.getMonth());
 
@@ -61,28 +63,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
                 <Check className="w-5 h-5 text-white" />
               </div>
-              <span className="text-white font-semibold text-lg">TaskFlow</span>
+              <span className="text-slate-900 dark:text-white font-semibold text-lg">TaskFlow</span>
             </div>
             
-            {user ? (
-              <div className="flex items-center gap-2">
-                 {user.photoURL ? (
-                   <img src={user.photoURL} alt={user.displayName || 'User'} className="w-8 h-8 rounded-lg border border-white/10" />
-                 ) : (
-                   <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/60">
-                     <UserIcon className="w-4 h-4" />
-                   </div>
-                 )}
-              </div>
-            ) : (
-              <button 
-                onClick={() => setShowLogin(true)}
-                className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/60 hover:bg-white/15 hover:text-white transition-all"
-                title="Войти"
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleTheme}
+                className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-white/60 hover:bg-slate-300 dark:hover:bg-white/15 hover:text-slate-900 dark:hover:text-white transition-all"
+                title={theme === 'dark' ? "Светлая тема" : "Темная тема"}
               >
-                <LogIn className="w-4 h-4" />
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
-            )}
+
+              {user ? (
+                <>
+                   {user.photoURL ? (
+                     <img src={user.photoURL} alt={user.displayName || 'User'} className="w-8 h-8 rounded-lg border border-slate-200 dark:border-white/10" />
+                   ) : (
+                     <div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-white/60">
+                       <UserIcon className="w-4 h-4" />
+                     </div>
+                   )}
+                </>
+              ) : (
+                <button 
+                  onClick={() => setShowLogin(true)}
+                  className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-white/60 hover:bg-slate-300 dark:hover:bg-white/15 hover:text-slate-900 dark:hover:text-white transition-all"
+                  title="Войти"
+                >
+                  <LogIn className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Calendar Navigation */}
@@ -90,16 +102,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="flex items-center justify-between mb-4">
               <button 
                 onClick={prevMonth}
-                className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/60 hover:bg-white/15 hover:text-white transition-all"
+                className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-white/60 hover:bg-slate-300 dark:hover:bg-white/15 hover:text-slate-900 dark:hover:text-white transition-all"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="text-white font-medium capitalize">
+              <span className="text-slate-900 dark:text-white font-medium capitalize">
                 {format(calendarDate, 'LLLL yyyy', { locale: ru })}
               </span>
               <button 
                 onClick={nextMonth}
-                className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/60 hover:bg-white/15 hover:text-white transition-all"
+                className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-white/60 hover:bg-slate-300 dark:hover:bg-white/15 hover:text-slate-900 dark:hover:text-white transition-all"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -108,7 +120,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {/* Calendar Grid */}
             <div className="grid grid-cols-7 gap-1 mb-2">
               {weekDays.map(day => (
-                <div key={day} className="text-center text-white/40 text-xs py-2">
+                <div key={day} className="text-center text-slate-400 dark:text-white/40 text-xs py-2">
                   {day}
                 </div>
               ))}
@@ -129,8 +141,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     }}
                     className={`
                       relative aspect-square rounded-xl text-sm font-medium transition-all
-                      ${!isCurrentMonth ? 'text-white/20' : 'text-white/70 hover:bg-white/10'}
-                      ${isSelected ? 'bg-blue-500 text-white hover:bg-blue-600' : ''}
+                      ${!isCurrentMonth ? 'text-slate-300 dark:text-white/20' : 'text-slate-600 dark:text-white/70 hover:bg-slate-200 dark:hover:bg-white/10'}
+                      ${isSelected ? '!bg-blue-500 !text-white hover:!bg-blue-600' : ''}
                       ${isToday(day) && !isSelected ? 'ring-2 ring-blue-500/50' : ''}
                     `}
                   >
@@ -139,7 +151,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     {/* Indicators */}
                     {stats && !isSelected && isCurrentMonth && (
                       <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full 
-                        ${stats.allCompleted ? 'bg-green-400' : 'bg-orange-400'}`} 
+                        ${stats.allCompleted ? 'bg-green-500 dark:bg-green-400' : 'bg-orange-500 dark:bg-orange-400'}`} 
                       />
                     )}
                   </button>
@@ -154,29 +166,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onSearchOpen();
               onCloseMobile();
             }}
-            className="w-full glass rounded-xl p-3 mb-4 flex items-center gap-3 text-white/40 hover:text-white/60 hover:bg-white/[0.07] transition-all"
+            className="w-full glass rounded-xl p-3 mb-4 flex items-center gap-3 text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/60 hover:bg-slate-100 dark:hover:bg-white/[0.07] transition-all"
           >
             <Search className="w-4 h-4" />
             <span className="text-sm">Поиск задач...</span>
           </button>
 
           {/* User Actions */}
-          <div className="mt-auto pt-4 border-t border-white/10">
+          <div className="mt-auto pt-4 border-t border-slate-200 dark:border-white/10">
             {user && (
               <div className="space-y-2">
-                <div className="text-sm text-white/50 text-center mb-2 truncate">
+                <div className="text-sm text-slate-500 dark:text-white/50 text-center mb-2 truncate">
                   {user.email}
                 </div>
                 <button 
                   onClick={() => logout()}
-                  className="w-full py-2 text-white/50 hover:text-white/70 text-sm flex items-center justify-center gap-2 transition-colors hover:bg-white/5 rounded-lg"
+                  className="w-full py-2 text-slate-500 dark:text-white/50 hover:text-slate-700 dark:hover:text-white/70 text-sm flex items-center justify-center gap-2 transition-colors hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg"
                 >
                   <LogOut className="w-4 h-4" />
                   Выйти
                 </button>
               </div>
             )}
-            <div className="text-xs text-white/30 text-center mt-4">
+            <div className="text-xs text-slate-400 dark:text-white/30 text-center mt-4">
               v{__APP_VERSION__}
             </div>
           </div>
