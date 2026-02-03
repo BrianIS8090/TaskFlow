@@ -44,8 +44,9 @@ function App() {
     );
   }
 
-  // 2. Not Authenticated -> Show Login Form
-  if (!user) {
+  // 2. Not Authenticated -> Show Login Form (в Tauri работаем без авторизации)
+  const isTauri = '__TAURI__' in window;
+  if (!user && !isTauri) {
     return <LoginForm />;
   }
 
@@ -103,7 +104,7 @@ function App() {
             </button>
           </div>
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-medium">
-            {user.displayName ? user.displayName[0].toUpperCase() : 'U'}
+            {user?.displayName ? user.displayName[0].toUpperCase() : 'U'}
           </div>
         </div>
 
