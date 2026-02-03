@@ -1,4 +1,21 @@
-# Logs
+# Зависимости
+node_modules/
+/.pnp
+.pnp.js
+
+# Сборка
+dist/
+dist-ssr/
+*.local
+
+# Переменные окружения (содержат Firebase credentials!)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Логи
 logs
 *.log
 npm-debug.log*
@@ -7,18 +24,36 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
+# IDE
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# OS файлы
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Тестирование
+coverage/
+*.coverage
+
+# TypeScript
+*.tsbuildinfo
+
+# Временные файлы
+*.tmp
+*.temp
+.cache/
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
