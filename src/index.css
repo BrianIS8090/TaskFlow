@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-accent: var(--color-blue-500);
   --color-success: var(--color-green-500);
@@ -11,12 +13,12 @@
 }
 
 body {
-  @apply bg-slate-900 text-white min-h-screen overflow-x-hidden;
+  @apply bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-white min-h-screen overflow-x-hidden transition-colors duration-300;
 }
 
 /* Glassmorphism utility */
 .glass {
-  @apply backdrop-blur-xl bg-white/5 border border-white/10;
+  @apply backdrop-blur-xl bg-white/70 border border-slate-200 dark:bg-white/5 dark:border-white/10 shadow-sm dark:shadow-none;
 }
 
 /* Custom scrollbar */

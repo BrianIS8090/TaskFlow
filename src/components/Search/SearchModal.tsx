@@ -51,27 +51,27 @@ export const SearchModal: React.FC<SearchModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4">
       {/* Overlay */}
       <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
       
       {/* Modal */}
-      <div className="relative glass rounded-2xl w-full max-w-lg overflow-hidden animate-fade-in">
+      <div className="relative glass rounded-2xl w-full max-w-lg overflow-hidden animate-fade-in shadow-2xl">
         {/* Search Input */}
-        <div className="flex items-center gap-3 p-4 border-b border-white/10">
-          <Search className="w-5 h-5 text-white/40" />
+        <div className="flex items-center gap-3 p-4 border-b border-slate-200 dark:border-white/10">
+          <Search className="w-5 h-5 text-slate-400 dark:text-white/40" />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Поиск задач и чекпоинтов..."
-            className="flex-1 bg-transparent text-white placeholder-white/40 outline-none text-lg"
+            className="flex-1 bg-transparent text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 outline-none text-lg"
           />
           {query && (
             <button
               onClick={() => setQuery('')}
-              className="w-6 h-6 rounded-md flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"
+              className="w-6 h-6 rounded-md flex items-center justify-center text-slate-400 dark:text-white/40 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-all"
             >
               <X className="w-4 h-4" />
             </button>
@@ -81,11 +81,11 @@ export const SearchModal: React.FC<SearchModalProps> = ({
         {/* Results */}
         <div className="max-h-[400px] overflow-y-auto">
           {loading ? (
-            <div className="p-8 text-center text-white/50">
+            <div className="p-8 text-center text-slate-500 dark:text-white/50">
               <div className="animate-pulse">Загрузка...</div>
             </div>
           ) : query && results.length === 0 ? (
-            <div className="p-8 text-center text-white/50">
+            <div className="p-8 text-center text-slate-500 dark:text-white/50">
               Ничего не найдено
             </div>
           ) : results.length > 0 ? (
@@ -94,27 +94,27 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                 <button
                   key={`${result.task.id}-${result.checkpoint?.id || 'task'}-${idx}`}
                   onClick={() => handleResultClick(result)}
-                  className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-start gap-3"
+                  className="w-full px-4 py-3 text-left hover:bg-slate-100 dark:hover:bg-white/10 transition-colors flex items-start gap-3"
                 >
                   <div className="mt-0.5">
                     {result.type === 'task' ? (
-                      <FileText className="w-4 h-4 text-blue-400" />
+                      <FileText className="w-4 h-4 text-blue-500 dark:text-blue-400" />
                     ) : (
-                      <CheckSquare className="w-4 h-4 text-green-400" />
+                      <CheckSquare className="w-4 h-4 text-green-500 dark:text-green-400" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-white font-medium truncate">
+                    <div className="text-slate-900 dark:text-white font-medium truncate">
                       {result.type === 'checkpoint' ? (
                         <>
-                          <span className="text-white/50">{result.task.title} → </span>
+                          <span className="text-slate-500 dark:text-white/50">{result.task.title} → </span>
                           {result.checkpoint?.text}
                         </>
                       ) : (
                         result.task.title
                       )}
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-white/40 mt-1">
+                    <div className="flex items-center gap-1 text-xs text-slate-400 dark:text-white/40 mt-1">
                       <Calendar className="w-3 h-3" />
                       {format(new Date(result.task.date), 'd MMMM yyyy', { locale: ru })}
                     </div>
@@ -123,7 +123,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
               ))}
             </div>
           ) : (
-            <div className="p-8 text-center text-white/40 text-sm">
+            <div className="p-8 text-center text-slate-400 dark:text-white/40 text-sm">
               Начните вводить для поиска
             </div>
           )}

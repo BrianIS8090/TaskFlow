@@ -38,7 +38,7 @@ function App() {
   // 1. Loading State (Checking Auth)
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-900 dark:text-white">
         <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
       </div>
     );
@@ -62,11 +62,11 @@ function App() {
   const completedTasks = tasks.filter(t => t.completed);
 
   return (
-    <div className="min-h-screen bg-slate-900 flex text-white font-sans">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex text-slate-900 dark:text-white font-sans transition-colors duration-300">
       {/* Ambient background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/3 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-500/5 rounded-full blur-3xl"></div>
+        <div className="absolute top-0 left-1/3 w-[600px] h-[600px] bg-blue-500/10 dark:bg-blue-500/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-500/10 dark:bg-purple-500/5 rounded-full blur-3xl"></div>
       </div>
 
       <Sidebar 
@@ -82,23 +82,23 @@ function App() {
         <div className="lg:hidden flex items-center justify-between mb-6">
           <button 
             onClick={() => setIsMobileMenuOpen(true)}
-            className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white"
+            className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-700 dark:text-white"
           >
             <CalendarIcon className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSelectedDate(subDays(selectedDate, 1))}
-              className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/15 transition-all"
+              className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-white/15 transition-all"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <div className="text-white font-medium capitalize min-w-[100px] text-center">
+            <div className="text-slate-900 dark:text-white font-medium capitalize min-w-[100px] text-center">
               {isToday(selectedDate) ? 'Сегодня' : format(selectedDate, 'd MMMM', { locale: ru })}
             </div>
             <button
               onClick={() => setSelectedDate(addDays(selectedDate, 1))}
-              className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/15 transition-all"
+              className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-white/15 transition-all"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -113,21 +113,21 @@ function App() {
           <div className="flex items-center justify-center gap-10 mb-1">
             <button
               onClick={() => setSelectedDate(subDays(selectedDate, 1))}
-              className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/15 transition-all"
+              className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-white/15 transition-all"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-3xl font-semibold text-white capitalize min-w-[180px] text-center">
+            <h1 className="text-3xl font-semibold text-slate-900 dark:text-white capitalize min-w-[180px] text-center">
               {isToday(selectedDate) ? 'Сегодня' : format(selectedDate, 'd MMMM', { locale: ru })}
             </h1>
             <button
               onClick={() => setSelectedDate(addDays(selectedDate, 1))}
-              className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/15 transition-all"
+              className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-white/15 transition-all"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
           </div>
-          <p className="text-white/50 h-6 text-center">
+          <p className="text-slate-500 dark:text-white/50 h-6 text-center">
             {tasksLoading ? (
               <span className="animate-pulse">Загрузка задач...</span>
             ) : (
@@ -147,7 +147,7 @@ function App() {
               onChange={(e) => setNewTaskText(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddTask()}
               placeholder="Добавить задачу..."
-              className="flex-1 bg-transparent text-white placeholder-white/40 outline-none text-lg"
+              className="flex-1 bg-transparent text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 outline-none text-lg"
             />
             <button 
               onClick={handleAddTask}
@@ -185,7 +185,7 @@ function App() {
           {/* Completed Section */}
           {completedTasks.length > 0 && (
             <div className="mt-8 animate-fade-in">
-              <h3 className="text-white/40 text-sm font-medium mb-3 uppercase tracking-wider">Выполнено</h3>
+              <h3 className="text-slate-400 dark:text-white/40 text-sm font-medium mb-3 uppercase tracking-wider">Выполнено</h3>
               <div className="space-y-2">
                 {completedTasks.map(task => (
                   <div key={task.id} className="opacity-60 hover:opacity-100 transition-opacity">
@@ -210,11 +210,11 @@ function App() {
           {/* Empty State */}
           {!tasksLoading && tasks.length === 0 && (
             <div className="text-center py-16 animate-fade-in">
-              <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-4">
-                <CalendarIcon className="w-10 h-10 text-white/20" />
+              <div className="w-20 h-20 bg-slate-200 dark:bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-4">
+                <CalendarIcon className="w-10 h-10 text-slate-400 dark:text-white/20" />
               </div>
-              <h3 className="text-white/60 text-lg font-medium mb-2">Нет задач на этот день</h3>
-              <p className="text-white/40 text-sm">Добавьте первую задачу выше</p>
+              <h3 className="text-slate-600 dark:text-white/60 text-lg font-medium mb-2">Нет задач на этот день</h3>
+              <p className="text-slate-400 dark:text-white/40 text-sm">Добавьте первую задачу выше</p>
             </div>
           )}
         </div>

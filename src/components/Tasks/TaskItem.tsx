@@ -87,7 +87,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   };
 
   return (
-    <div className="glass rounded-2xl overflow-hidden transition-all hover:bg-white/[0.07]">
+    <div className="glass rounded-2xl overflow-hidden transition-all hover:bg-slate-200/50 dark:hover:bg-white/[0.07]">
       <div className="p-4 flex items-start gap-4">
         <button
           onClick={handleToggleAttempt}
@@ -95,8 +95,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({
             ${task.completed 
               ? 'bg-green-500/20 border-green-500' 
               : hasIncompleteCheckpoints 
-                ? 'border-white/10 cursor-not-allowed opacity-50' 
-                : 'border-white/30 hover:border-blue-500'}`}
+                ? 'border-slate-200 dark:border-white/10 cursor-not-allowed opacity-50' 
+                : 'border-slate-300 dark:border-white/30 hover:border-blue-500'}`}
         >
           {task.completed && <Check className="w-4 h-4 text-green-500" />}
         </button>
@@ -113,7 +113,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                   if (e.key === 'Escape') handleCancel();
                 }}
                 autoFocus
-                className="w-full bg-white/10 text-white font-medium px-3 py-2 rounded-lg outline-none border border-white/20 focus:border-blue-500"
+                className="w-full bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white font-medium px-3 py-2 rounded-lg outline-none border border-slate-200 dark:border-white/20 focus:border-blue-500"
               />
               <div className="flex gap-2">
                 <button
@@ -125,7 +125,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                 </button>
                 <button
                   onClick={handleCancel}
-                  className="px-3 py-1.5 bg-white/10 text-white/70 text-sm rounded-lg hover:bg-white/15 transition-colors flex items-center gap-1"
+                  className="px-3 py-1.5 bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-white/70 text-sm rounded-lg hover:bg-slate-300 dark:hover:bg-white/15 transition-colors flex items-center gap-1"
                 >
                   <X className="w-3 h-3" />
                   Отмена
@@ -137,14 +137,14 @@ export const TaskItem: React.FC<TaskItemProps> = ({
               onClick={onToggleExpand}
               className="text-left w-full"
             >
-              <div className={`font-medium ${task.completed ? 'text-white/40 line-through' : 'text-white'}`}>
+              <div className={`font-medium ${task.completed ? 'text-slate-400 dark:text-white/40 line-through' : 'text-slate-900 dark:text-white'}`}>
                 {task.title}
               </div>
-              <div className="text-white/50 text-sm mt-1 flex items-center gap-2">
+              <div className="text-slate-500 dark:text-white/50 text-sm mt-1 flex items-center gap-2">
                 {task.checkpoints.length > 0 ? (
                   <span>{task.checkpoints.filter(c => c.done).length} / {task.checkpoints.length} чекпоинтов</span>
                 ) : (
-                  <span className="text-white/30">Нажмите чтобы добавить чекпоинты</span>
+                  <span className="text-slate-400 dark:text-white/30">Нажмите чтобы добавить чекпоинты</span>
                 )}
                 <ChevronRight className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
               </div>
@@ -167,14 +167,14 @@ export const TaskItem: React.FC<TaskItemProps> = ({
             <>
               <button
                 onClick={() => setIsEditing(true)}
-                className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/50 hover:text-blue-400 hover:bg-blue-500/20 transition-all"
+                className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-400 dark:text-white/50 hover:text-blue-500 hover:bg-blue-500/20 transition-all"
                 title="Редактировать"
               >
                 <Pencil className="w-4 h-4" />
               </button>
               <button
                 onClick={onMoveToTomorrow}
-                className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/50 hover:text-orange-400 hover:bg-orange-500/20 transition-all"
+                className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-400 dark:text-white/50 hover:text-orange-500 hover:bg-orange-500/20 transition-all"
                 title="Перенести на завтра"
               >
                 <ArrowRight className="w-4 h-4" />
@@ -183,7 +183,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           )}
           <button
             onClick={() => setShowDeleteConfirm(true)}
-            className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/50 hover:text-red-400 hover:bg-red-500/20 transition-all"
+            className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-400 dark:text-white/50 hover:text-red-500 hover:bg-red-500/20 transition-all"
             title="Удалить"
           >
             <Trash2 className="w-4 h-4" />
@@ -195,7 +195,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           <button
             ref={buttonRef}
             onClick={handleOpenMenu}
-            className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/15 transition-all"
+            className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-400 dark:text-white/50 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-white/15 transition-all"
           >
             <MoreVertical className="w-4 h-4" />
           </button>
@@ -213,7 +213,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                       setShowMobileMenu(false);
                       setIsEditing(true);
                     }}
-                    className="w-full px-4 py-2.5 text-left text-sm text-white/70 hover:bg-white/10 hover:text-blue-400 flex items-center gap-3 transition-colors"
+                    className="w-full px-4 py-2.5 text-left text-sm text-slate-600 dark:text-white/70 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-blue-500 flex items-center gap-3 transition-colors"
                   >
                     <Pencil className="w-4 h-4" />
                     Редактировать
@@ -223,7 +223,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                       setShowMobileMenu(false);
                       onMoveToTomorrow();
                     }}
-                    className="w-full px-4 py-2.5 text-left text-sm text-white/70 hover:bg-white/10 hover:text-orange-400 flex items-center gap-3 transition-colors"
+                    className="w-full px-4 py-2.5 text-left text-sm text-slate-600 dark:text-white/70 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-orange-500 flex items-center gap-3 transition-colors"
                   >
                     <ArrowRight className="w-4 h-4" />
                     Перенести на завтра
@@ -235,7 +235,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                   setShowMobileMenu(false);
                   setShowDeleteConfirm(true);
                 }}
-                className="w-full px-4 py-2.5 text-left text-sm text-white/70 hover:bg-white/10 hover:text-red-400 flex items-center gap-3 transition-colors"
+                className="w-full px-4 py-2.5 text-left text-sm text-slate-600 dark:text-white/70 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-red-500 flex items-center gap-3 transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
                 Удалить
