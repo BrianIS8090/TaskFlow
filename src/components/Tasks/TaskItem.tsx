@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Check, ChevronRight, Pencil, ArrowRight, Trash2, X } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Check, ChevronRight, Pencil, ArrowRight, Trash2, X, MoreVertical } from 'lucide-react';
 import type { Task } from '../../types';
 import { CheckpointsList } from './CheckpointsList';
 import { ConfirmDialog } from '../UI/ConfirmDialog';
@@ -32,6 +32,21 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(task.title);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Закрытие меню при клике вне его
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMobileMenu(false);
+      }
+    };
+    if (showMobileMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMobileMenu]);
 
   const handleSave = () => {
     if (editValue.trim()) {
@@ -130,7 +145,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           )}
         </div>
 
-        <div className="flex gap-2">
+        {/* Desktop кнопки */}
+        <div className="hidden lg:flex gap-2">
           {!task.completed && (
             <>
               <button
@@ -156,6 +172,55 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           >
             <Trash2 className="w-4 h-4" />
           </button>
+        </div>
+
+        {/* Mobile бургер-меню */}
+        <div className="lg:hidden relative" ref={menuRef}>
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/15 transition-all"
+          >
+            <MoreVertical className="w-4 h-4" />
+          </button>
+
+          {showMobileMenu && (
+            <div className="absolute right-0 top-10 z-20 glass rounded-xl py-2 min-w-[160px] shadow-xl animate-fade-in">
+              {!task.completed && (
+                <>
+                  <button
+                    onClick={() => {
+                      setShowMobileMenu(false);
+                      setIsEditing(true);
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-sm text-white/70 hover:bg-white/10 flex items-center gap-3 transition-colors"
+                  >
+                    <Pencil className="w-4 h-4 text-blue-400" />
+                    Редактировать
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowMobileMenu(false);
+                      onMoveToTomorrow();
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-sm text-white/70 hover:bg-white/10 flex items-center gap-3 transition-colors"
+                  >
+                    <ArrowRight className="w-4 h-4 text-orange-400" />
+                    Перенести на завтра
+                  </button>
+                </>
+              )}
+              <button
+                onClick={() => {
+                  setShowMobileMenu(false);
+                  setShowDeleteConfirm(true);
+                }}
+                className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-white/10 flex items-center gap-3 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+                Удалить
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
