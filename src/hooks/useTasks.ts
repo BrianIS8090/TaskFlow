@@ -36,7 +36,9 @@ export function useTasks(date: string) {
       date,
       completed: false,
       order: tasks.length + 1,
-      checkpoints: []
+      checkpoints: [],
+      completedAt: null,
+      postponeCount: 0
     });
   };
 
@@ -47,7 +49,11 @@ export function useTasks(date: string) {
       if (!task.completed && task.checkpoints.some(cp => !cp.done)) {
         return;
       }
-      await repository.updateTask(taskId, { completed: !task.completed });
+      const newCompleted = !task.completed;
+      await repository.updateTask(taskId, { 
+        completed: newCompleted,
+        completedAt: newCompleted ? new Date() : null
+      });
     }
   };
 
@@ -65,7 +71,10 @@ export function useTasks(date: string) {
       const currentDate = new Date(date);
       currentDate.setDate(currentDate.getDate() + 1);
       const nextDate = currentDate.toISOString().split('T')[0];
-      await repository.updateTask(taskId, { date: nextDate });
+      await repository.updateTask(taskId, { 
+        date: nextDate,
+        postponeCount: (task.postponeCount || 0) + 1
+      });
     }
   };
 

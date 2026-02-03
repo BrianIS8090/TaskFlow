@@ -12,6 +12,8 @@ export interface Task {
   order: number;
   checkpoints: Checkpoint[];
   createdAt: any;
+  completedAt: any | null; // Дата завершения задачи
+  postponeCount: number; // Счётчик переносов задачи
 }
 
 export interface User {
