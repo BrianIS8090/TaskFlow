@@ -29,7 +29,7 @@ export const CheckpointsList: React.FC<CheckpointsListProps> = ({
       {checkpoints.map(cp => (
         <div
           key={cp.id}
-          className="flex items-center gap-3 w-full group"
+          className="flex items-start gap-3 w-full group"
         >
           <button
             onClick={() => onToggle(cp.id)}
@@ -38,7 +38,7 @@ export const CheckpointsList: React.FC<CheckpointsListProps> = ({
           >
             {cp.done && <Check className="w-3 h-3 text-white" />}
           </button>
-          <span className={`flex-1 text-sm ${cp.done ? 'text-white/40 line-through' : 'text-white/70'}`}>
+          <span className={`flex-1 text-sm break-words ${cp.done ? 'text-white/40 line-through' : 'text-white/70'}`} style={{ overflowWrap: 'anywhere' }}>
             {cp.text}
           </span>
           <button
