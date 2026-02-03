@@ -45,7 +45,7 @@ export const CheckpointsList: React.FC<CheckpointsListProps> = ({
           </span>
           <button
             onClick={() => setDeleteConfirm({ isOpen: true, checkpointId: cp.id, text: cp.text })}
-            className="w-6 h-6 rounded-md flex items-center justify-center text-white/30 hover:text-red-400 hover:bg-red-500/20 opacity-0 group-hover:opacity-100 transition-all"
+            className="w-6 h-6 rounded-md flex items-center justify-center text-white/30 hover:text-red-400 hover:bg-red-500/20 lg:opacity-0 lg:group-hover:opacity-100 transition-all"
           >
             <Trash2 className="w-3 h-3" />
           </button>

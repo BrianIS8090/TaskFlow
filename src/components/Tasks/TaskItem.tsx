@@ -213,9 +213,9 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                       setShowMobileMenu(false);
                       setIsEditing(true);
                     }}
-                    className="w-full px-4 py-2.5 text-left text-sm text-white/70 hover:bg-white/10 flex items-center gap-3 transition-colors"
+                    className="w-full px-4 py-2.5 text-left text-sm text-white/70 hover:bg-white/10 hover:text-blue-400 flex items-center gap-3 transition-colors"
                   >
-                    <Pencil className="w-4 h-4 text-blue-400" />
+                    <Pencil className="w-4 h-4" />
                     Редактировать
                   </button>
                   <button
@@ -223,9 +223,9 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                       setShowMobileMenu(false);
                       onMoveToTomorrow();
                     }}
-                    className="w-full px-4 py-2.5 text-left text-sm text-white/70 hover:bg-white/10 flex items-center gap-3 transition-colors"
+                    className="w-full px-4 py-2.5 text-left text-sm text-white/70 hover:bg-white/10 hover:text-orange-400 flex items-center gap-3 transition-colors"
                   >
-                    <ArrowRight className="w-4 h-4 text-orange-400" />
+                    <ArrowRight className="w-4 h-4" />
                     Перенести на завтра
                   </button>
                 </>
@@ -235,7 +235,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                   setShowMobileMenu(false);
                   setShowDeleteConfirm(true);
                 }}
-                className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-white/10 flex items-center gap-3 transition-colors"
+                className="w-full px-4 py-2.5 text-left text-sm text-white/70 hover:bg-white/10 hover:text-red-400 flex items-center gap-3 transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
                 Удалить
