@@ -91,6 +91,26 @@ class FirebaseTaskRepository implements TaskRepository {
     } as Task));
   }
 
+  onTasksForMonthChange(year: number, month: number, callback: (tasks: Task[]) => void): () => void {
+    // month is 0-indexed (0 = Jan)
+    const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+    const endDate = `${year}-${String(month + 1).padStart(2, '0')}-31`;
+
+    const q = query(
+      this.getCollection(),
+      where('date', '>=', startDate),
+      where('date', '<=', endDate)
+    );
+
+    return onSnapshot(q, (snapshot) => {
+      const tasks = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Task));
+      callback(tasks);
+    });
+  }
+
   async getAllTasks(): Promise<Task[]> {
     const q = query(this.getCollection(), orderBy('date', 'desc'));
     const snapshot = await getDocs(q);

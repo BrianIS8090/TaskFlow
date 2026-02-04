@@ -81,6 +81,47 @@ class MockTaskRepository implements TaskRepository {
     return result;
   }
 
+  /**
+   * Подписывается на изменения задач за весь месяц.
+   * Для mock репозитория подписываемся на все даты месяца.
+   */
+  onTasksForMonthChange(year: number, month: number, callback: (tasks: Task[]) => void): () => void {
+    const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+    const endDate = `${year}-${String(month + 1).padStart(2, '0')}-31`;
+    
+    // Подписываемся на все даты месяца
+    const unsubscribes: (() => void)[] = [];
+    
+    for (const date in this.tasks) {
+      if (date >= startDate && date <= endDate) {
+        const unsubscribe = this.onTasksChange(date, () => {
+          // Пересчитываем все задачи месяца при любом изменении
+          const monthTasks: Task[] = [];
+          for (const d in this.tasks) {
+            if (d >= startDate && d <= endDate) {
+              monthTasks.push(...this.tasks[d]);
+            }
+          }
+          callback(monthTasks);
+        });
+        unsubscribes.push(unsubscribe);
+      }
+    }
+    
+    // Отправляем начальные данные
+    const initialTasks: Task[] = [];
+    for (const date in this.tasks) {
+      if (date >= startDate && date <= endDate) {
+        initialTasks.push(...this.tasks[date]);
+      }
+    }
+    callback(initialTasks);
+    
+    return () => {
+      unsubscribes.forEach(unsub => unsub());
+    };
+  }
+
   async getAllTasks(): Promise<Task[]> {
     const result: Task[] = [];
     for (const date in this.tasks) {

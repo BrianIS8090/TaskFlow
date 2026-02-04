@@ -110,6 +110,16 @@ export function useTasks(date: string) {
     }
   };
 
+  const updateCheckpoint = async (taskId: string, checkpointId: string | number, text: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+      const updatedCheckpoints = task.checkpoints.map(cp =>
+        cp.id === checkpointId ? { ...cp, text: text.trim() } : cp
+      );
+      await repository.updateTask(taskId, { checkpoints: updatedCheckpoints });
+    }
+  };
+
   return {
     tasks,
     loading,
@@ -120,6 +130,7 @@ export function useTasks(date: string) {
     moveTaskToTomorrow,
     addCheckpoint,
     toggleCheckpoint,
-    deleteCheckpoint
+    deleteCheckpoint,
+    updateCheckpoint
   };
 }

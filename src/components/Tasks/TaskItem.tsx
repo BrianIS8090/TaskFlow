@@ -16,6 +16,7 @@ interface TaskItemProps {
   onAddCheckpoint: (text: string) => void;
   onToggleCheckpoint: (id: string | number) => void;
   onDeleteCheckpoint: (id: string | number) => void;
+  onUpdateCheckpoint?: (id: string | number, text: string) => void;
 }
 
 export const TaskItem: React.FC<TaskItemProps> = ({
@@ -28,7 +29,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   onUpdateTitle,
   onAddCheckpoint,
   onToggleCheckpoint,
-  onDeleteCheckpoint
+  onDeleteCheckpoint,
+  onUpdateCheckpoint
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(task.title);
@@ -157,6 +159,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
               onAdd={onAddCheckpoint}
               onToggle={onToggleCheckpoint}
               onDelete={onDeleteCheckpoint}
+              onUpdate={onUpdateCheckpoint}
             />
           )}
         </div>

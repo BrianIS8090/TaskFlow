@@ -31,4 +31,9 @@ export interface TaskRepository {
   onTasksChange(date: string, callback: (tasks: Task[]) => void): () => void;
   getTasksForMonth(year: number, month: number): Promise<Task[]>;
   getAllTasks(): Promise<Task[]>;
+  /**
+   * Подписывается на изменения задач за весь месяц в реальном времени.
+   * Возвращает функцию для отписки.
+   */
+  onTasksForMonthChange(year: number, month: number, callback: (tasks: Task[]) => void): () => void;
 }

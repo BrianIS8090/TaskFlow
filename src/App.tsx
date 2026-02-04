@@ -32,6 +32,7 @@ function App() {
     addCheckpoint,
     toggleCheckpoint,
     deleteCheckpoint,
+    updateCheckpoint,
     loading: tasksLoading
   } = useTasks(dateKey);
 
@@ -86,23 +87,28 @@ function App() {
           >
             <CalendarIcon className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setSelectedDate(subDays(selectedDate, 1))}
-              className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-white/15 transition-all"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <div className="text-slate-900 dark:text-white font-medium capitalize min-w-[100px] text-center">
-              {isToday(selectedDate) ? 'Сегодня' : format(selectedDate, 'd MMMM', { locale: ru })}
+            <div className="flex flex-col items-center">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSelectedDate(subDays(selectedDate, 1))}
+                  className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-white/15 transition-all"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <div className="text-slate-900 dark:text-white font-medium capitalize min-w-[100px] text-center">
+                  {isToday(selectedDate) ? 'Сегодня' : format(selectedDate, 'd MMMM', { locale: ru })}
+                </div>
+                <button
+                  onClick={() => setSelectedDate(addDays(selectedDate, 1))}
+                  className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-white/15 transition-all"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+              <span className="text-sm text-slate-500 dark:text-white/50 capitalize">
+                {format(selectedDate, 'EEEE', { locale: ru })}
+              </span>
             </div>
-            <button
-              onClick={() => setSelectedDate(addDays(selectedDate, 1))}
-              className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-white/15 transition-all"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-medium">
             {user?.displayName ? user.displayName[0].toUpperCase() : 'U'}
           </div>
@@ -117,9 +123,14 @@ function App() {
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <h1 className="text-3xl font-semibold text-slate-900 dark:text-white capitalize min-w-[180px] text-center">
-              {isToday(selectedDate) ? 'Сегодня' : format(selectedDate, 'd MMMM', { locale: ru })}
-            </h1>
+            <div className="flex flex-col items-center min-w-[180px]">
+              <h1 className="text-3xl font-semibold text-slate-900 dark:text-white capitalize text-center">
+                {isToday(selectedDate) ? 'Сегодня' : format(selectedDate, 'd MMMM', { locale: ru })}
+              </h1>
+              <span className="text-lg text-slate-500 dark:text-white/50 capitalize">
+                {format(selectedDate, 'EEEE', { locale: ru })}
+              </span>
+            </div>
             <button
               onClick={() => setSelectedDate(addDays(selectedDate, 1))}
               className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-white/15 transition-all"
@@ -178,6 +189,7 @@ function App() {
                 onAddCheckpoint={(text) => addCheckpoint(String(task.id), text)}
                 onToggleCheckpoint={(cpId) => toggleCheckpoint(String(task.id), cpId)}
                 onDeleteCheckpoint={(cpId) => deleteCheckpoint(String(task.id), cpId)}
+                onUpdateCheckpoint={(cpId, text) => updateCheckpoint(String(task.id), cpId, text)}
               />
             ))
           )}
@@ -200,6 +212,7 @@ function App() {
                       onAddCheckpoint={(text) => addCheckpoint(String(task.id), text)}
                       onToggleCheckpoint={(cpId) => toggleCheckpoint(String(task.id), cpId)}
                       onDeleteCheckpoint={(cpId) => deleteCheckpoint(String(task.id), cpId)}
+                      onUpdateCheckpoint={(cpId, text) => updateCheckpoint(String(task.id), cpId, text)}
                     />
                   </div>
                 ))}
