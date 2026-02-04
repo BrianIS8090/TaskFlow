@@ -1,4 +1,5 @@
-# TaskFlow
+# TaskFlow 
+<img width="2540" height="1167" alt="image" src="https://github.com/user-attachments/assets/2942707a-19a9-480b-bd3f-6d3e64d5b744" />
 
 TaskFlow — это приложение для управления задачами, построенное на стеке:
 - **Frontend:** React + Vite + TypeScript + Tailwind CSS
