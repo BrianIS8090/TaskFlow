@@ -94,7 +94,7 @@ export const CheckpointsList: React.FC<CheckpointsListProps> = ({
               <span className={`flex-1 text-sm break-words ${cp.done ? 'text-slate-400 dark:text-white/40 line-through' : 'text-slate-600 dark:text-white/70'}`} style={{ overflowWrap: 'anywhere' }}>
                 {cp.text}
               </span>
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                 {onUpdate && (
                   <button
                     onClick={() => handleStartEdit(cp)}
