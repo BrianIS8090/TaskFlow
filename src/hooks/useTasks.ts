@@ -71,9 +71,22 @@ export function useTasks(date: string) {
       const currentDate = new Date(date);
       currentDate.setDate(currentDate.getDate() + 1);
       const nextDate = currentDate.toISOString().split('T')[0];
-      await repository.updateTask(taskId, { 
+      await repository.updateTask(taskId, {
         date: nextDate,
         postponeCount: (task.postponeCount || 0) + 1
+      });
+    }
+  };
+
+  const moveTaskToYesterday = async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+      const currentDate = new Date(date);
+      currentDate.setDate(currentDate.getDate() - 1);
+      const prevDate = currentDate.toISOString().split('T')[0];
+      await repository.updateTask(taskId, {
+        date: prevDate,
+        postponeCount: Math.max((task.postponeCount || 0) - 1, 0)
       });
     }
   };
@@ -128,6 +141,7 @@ export function useTasks(date: string) {
     deleteTask,
     updateTaskTitle,
     moveTaskToTomorrow,
+    moveTaskToYesterday,
     addCheckpoint,
     toggleCheckpoint,
     deleteCheckpoint,

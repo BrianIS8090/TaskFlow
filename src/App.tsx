@@ -22,13 +22,14 @@ function App() {
   // Conditionally call hooks logic only if authenticated to avoid errors
   // But hooks must be called unconditionally in React. 
   // We handle the "no user" case inside useTasks safely.
-  const { 
-    tasks, 
-    addTask, 
-    toggleTask, 
-    deleteTask, 
-    updateTaskTitle, 
+  const {
+    tasks,
+    addTask,
+    toggleTask,
+    deleteTask,
+    updateTaskTitle,
     moveTaskToTomorrow,
+    moveTaskToYesterday,
     addCheckpoint,
     toggleCheckpoint,
     deleteCheckpoint,
@@ -185,6 +186,7 @@ function App() {
                 onToggleComplete={() => toggleTask(String(task.id))}
                 onDelete={() => deleteTask(String(task.id))}
                 onMoveToTomorrow={() => moveTaskToTomorrow(String(task.id))}
+                onMoveToYesterday={() => moveTaskToYesterday(String(task.id))}
                 onUpdateTitle={(title) => updateTaskTitle(String(task.id), title)}
                 onAddCheckpoint={(text) => addCheckpoint(String(task.id), text)}
                 onToggleCheckpoint={(cpId) => toggleCheckpoint(String(task.id), cpId)}
@@ -208,6 +210,7 @@ function App() {
                       onToggleComplete={() => toggleTask(String(task.id))}
                       onDelete={() => deleteTask(String(task.id))}
                       onMoveToTomorrow={() => moveTaskToTomorrow(String(task.id))}
+                      onMoveToYesterday={() => moveTaskToYesterday(String(task.id))}
                       onUpdateTitle={(title) => updateTaskTitle(String(task.id), title)}
                       onAddCheckpoint={(text) => addCheckpoint(String(task.id), text)}
                       onToggleCheckpoint={(cpId) => toggleCheckpoint(String(task.id), cpId)}

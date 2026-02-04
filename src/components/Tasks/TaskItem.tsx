@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, ChevronRight, Pencil, ArrowRight, Trash2, X, MoreVertical } from 'lucide-react';
+import { Check, ChevronRight, Pencil, ArrowRight, ArrowLeft, Trash2, X, MoreVertical } from 'lucide-react';
 import type { Task } from '../../types';
 import { CheckpointsList } from './CheckpointsList';
 import { ConfirmDialog } from '../UI/ConfirmDialog';
@@ -12,6 +12,7 @@ interface TaskItemProps {
   onToggleComplete: () => void;
   onDelete: () => void;
   onMoveToTomorrow: () => void;
+  onMoveToYesterday: () => void;
   onUpdateTitle: (title: string) => void;
   onAddCheckpoint: (text: string) => void;
   onToggleCheckpoint: (id: string | number) => void;
@@ -26,6 +27,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   onToggleComplete,
   onDelete,
   onMoveToTomorrow,
+  onMoveToYesterday,
   onUpdateTitle,
   onAddCheckpoint,
   onToggleCheckpoint,
@@ -176,6 +178,13 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                 <Pencil className="w-4 h-4" />
               </button>
               <button
+                onClick={onMoveToYesterday}
+                className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-400 dark:text-white/50 hover:text-purple-500 hover:bg-purple-500/20 transition-all"
+                title="Перенести на вчера"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+              <button
                 onClick={onMoveToTomorrow}
                 className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-400 dark:text-white/50 hover:text-orange-500 hover:bg-orange-500/20 transition-all"
                 title="Перенести на завтра"
@@ -204,7 +213,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           </button>
 
           {showMobileMenu && createPortal(
-            <div 
+            <div
               ref={menuRef}
               className="fixed z-[100] glass rounded-xl py-2 min-w-[160px] shadow-xl animate-fade-in"
               style={{ top: menuPosition.top, right: menuPosition.right }}
@@ -220,6 +229,16 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                   >
                     <Pencil className="w-4 h-4" />
                     Редактировать
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowMobileMenu(false);
+                      onMoveToYesterday();
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-sm text-slate-600 dark:text-white/70 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-purple-500 flex items-center gap-3 transition-colors"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Перенести на вчера
                   </button>
                   <button
                     onClick={() => {
