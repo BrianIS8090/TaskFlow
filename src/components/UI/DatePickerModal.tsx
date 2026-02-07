@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, isToday, format } from 'date-fns';
@@ -19,13 +19,6 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
 }) => {
   const [calendarDate, setCalendarDate] = useState(initialDate);
   const [selectedDate, setSelectedDate] = useState(initialDate);
-
-  useEffect(() => {
-    if (isOpen) {
-      setCalendarDate(initialDate);
-      setSelectedDate(initialDate);
-    }
-  }, [initialDate, isOpen]);
 
   const days = useMemo(() => eachDayOfInterval({
     start: startOfWeek(startOfMonth(calendarDate), { weekStartsOn: 1 }),

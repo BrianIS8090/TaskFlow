@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { createFirebaseRepository } from '../services/firebaseTasks';
 import { mockTaskRepository } from '../services/mockTasks';
 import type { Task } from '../types';
@@ -35,7 +35,7 @@ export function useCalendarStats(year: number, month: number) {
     
     const incomplete = dayTasks.filter(t => !t.completed).length;
     
-    // Check if all tasks AND all checkpoints are completed
+    // Проверяем, что завершены все задачи и все чекпоинты
     const allTasksCompleted = incomplete === 0;
     const allCheckpointsCompleted = dayTasks.every(task => 
       task.checkpoints.length === 0 || task.checkpoints.every(cp => cp.done)

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Check, X } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/useAuth';
 
 interface LoginFormProps {
   onClose?: () => void;
@@ -15,7 +15,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onClose }) => {
     try {
       await signInWithGoogle();
       if (onClose) onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError('Ошибка входа через Google. Проверьте консоль.');
       console.error(err);
     }
@@ -23,7 +23,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onClose }) => {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900 bg-black/60 backdrop-blur-sm">
-      {/* Ambient background for login screen */}
+      {/* Фоновая подсветка для экрана входа */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>

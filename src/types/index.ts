@@ -11,8 +11,8 @@ export interface Task {
   completed: boolean;
   order: number;
   checkpoints: Checkpoint[];
-  createdAt: any;
-  completedAt: any | null; // Дата завершения задачи
+  createdAt: Date | null; // Дата создания задачи
+  completedAt: Date | null; // Дата завершения задачи
   postponeCount: number; // Счётчик переносов задачи
 }
 
