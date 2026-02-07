@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useDndContext } from './core';
 
 type DndId = string | number;
@@ -36,16 +36,53 @@ export const useSortable = ({ id, disabled }: UseSortableArgs) => {
     }
   };
 
+  const pointerStateRef = useRef<{
+    startX: number;
+    startY: number;
+    active: boolean;
+  } | null>(null);
+
   const listeners = disabled
     ? {}
     : {
         onPointerDown: (event: React.PointerEvent) => {
           const target = event.target as HTMLElement | null;
-          if (target?.closest('button, input, textarea, select, a')) {
+          if (target?.closest('input, textarea, select, a, [data-dnd-ignore]')) {
             return;
           }
-          event.preventDefault();
-          context.startDrag(id, { x: event.clientX, y: event.clientY });
+
+          pointerStateRef.current = {
+            startX: event.clientX,
+            startY: event.clientY,
+            active: false
+          };
+
+          const handlePointerMove = (moveEvent: PointerEvent) => {
+            const state = pointerStateRef.current;
+            if (!state) return;
+            if (state.active) return;
+            const deltaX = moveEvent.clientX - state.startX;
+            const deltaY = moveEvent.clientY - state.startY;
+            const distance = Math.hypot(deltaX, deltaY);
+            if (distance < 6) return;
+
+            state.active = true;
+            context.startDrag(id, { x: state.startX, y: state.startY });
+            window.removeEventListener('pointermove', handlePointerMove);
+            window.removeEventListener('pointerup', handlePointerUp);
+            window.removeEventListener('pointercancel', handlePointerUp);
+          };
+
+          const handlePointerUp = () => {
+            pointerStateRef.current = null;
+            window.removeEventListener('pointermove', handlePointerMove);
+            window.removeEventListener('pointerup', handlePointerUp);
+            window.removeEventListener('pointercancel', handlePointerUp);
+          };
+
+          window.addEventListener('pointermove', handlePointerMove);
+          window.addEventListener('pointerup', handlePointerUp);
+          window.addEventListener('pointercancel', handlePointerUp);
         }
       };
 
