@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, ChevronRight, Pencil, ArrowRight, ArrowLeft, Trash2, X, MoreVertical } from 'lucide-react';
+import { Check, ChevronRight, Pencil, ArrowRight, ArrowLeft, Trash2, X, MoreVertical, Calendar } from 'lucide-react';
 import type { Task } from '../../types';
 import { CheckpointsList } from './CheckpointsList';
 import { ConfirmDialog } from '../UI/ConfirmDialog';
@@ -13,6 +13,7 @@ interface TaskItemProps {
   onDelete: () => void;
   onMoveToTomorrow: () => void;
   onMoveToYesterday: () => void;
+  onMoveToDate: () => void;
   onUpdateTitle: (title: string) => void;
   onAddCheckpoint: (text: string) => void;
   onToggleCheckpoint: (id: string | number) => void;
@@ -28,6 +29,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   onDelete,
   onMoveToTomorrow,
   onMoveToYesterday,
+  onMoveToDate,
   onUpdateTitle,
   onAddCheckpoint,
   onToggleCheckpoint,
@@ -185,6 +187,13 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                 <ArrowLeft className="w-4 h-4" />
               </button>
               <button
+                onClick={onMoveToDate}
+                className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-400 dark:text-white/50 hover:text-sky-500 hover:bg-sky-500/20 transition-all"
+                title="Перенести на дату"
+              >
+                <Calendar className="w-4 h-4" />
+              </button>
+              <button
                 onClick={onMoveToTomorrow}
                 className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-400 dark:text-white/50 hover:text-orange-500 hover:bg-orange-500/20 transition-all"
                 title="Перенести на завтра"
@@ -239,6 +248,16 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                   >
                     <ArrowLeft className="w-4 h-4" />
                     Перенести на вчера
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowMobileMenu(false);
+                      onMoveToDate();
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-sm text-slate-600 dark:text-white/70 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-sky-500 flex items-center gap-3 transition-colors"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    Перенести на дату
                   </button>
                   <button
                     onClick={() => {

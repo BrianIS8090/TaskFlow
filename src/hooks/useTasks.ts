@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { differenceInCalendarDays, format } from 'date-fns';
 import type { Task, Checkpoint } from '../types';
 import { mockTaskRepository } from '../services/mockTasks';
 import { createFirebaseRepository } from '../services/firebaseTasks';
@@ -91,6 +92,21 @@ export function useTasks(date: string) {
     }
   };
 
+  const moveTaskToDate = async (taskId: string, targetDate: Date | string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+      const currentDate = task.date ? new Date(task.date) : new Date(date);
+      const normalizedTarget = typeof targetDate === 'string' ? new Date(targetDate) : targetDate;
+      const dayDiff = differenceInCalendarDays(normalizedTarget, currentDate);
+      const currentPostpone = task.postponeCount || 0;
+      const nextPostpone = Math.max(currentPostpone + dayDiff, 0);
+      await repository.updateTask(taskId, {
+        date: format(normalizedTarget, 'yyyy-MM-dd'),
+        postponeCount: nextPostpone
+      });
+    }
+  };
+
   const addCheckpoint = async (taskId: string, text: string) => {
     const task = tasks.find(t => t.id === taskId);
     if (task) {
@@ -142,6 +158,7 @@ export function useTasks(date: string) {
     updateTaskTitle,
     moveTaskToTomorrow,
     moveTaskToYesterday,
+    moveTaskToDate,
     addCheckpoint,
     toggleCheckpoint,
     deleteCheckpoint,
