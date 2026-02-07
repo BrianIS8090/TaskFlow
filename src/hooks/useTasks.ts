@@ -77,6 +77,10 @@ export function useTasks(date: string) {
     await repository.updateTask(taskId, { title });
   };
 
+  const updateTask = async (taskId: string | number, data: Partial<Task>) => {
+    await repository.updateTask(String(taskId), data);
+  };
+
   const moveTaskToTomorrow = async (task: Task) => {
     const currentDate = task.date ? new Date(task.date) : new Date(date);
     currentDate.setDate(currentDate.getDate() + 1);
@@ -153,6 +157,7 @@ export function useTasks(date: string) {
     addCheckpoint,
     toggleCheckpoint,
     deleteCheckpoint,
-    updateCheckpoint
+    updateCheckpoint,
+    updateTask
   };
 }
