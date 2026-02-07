@@ -9,7 +9,8 @@ import {
   doc, 
   onSnapshot,
   orderBy,
-  serverTimestamp
+  serverTimestamp,
+  writeBatch
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import type { Task, TaskRepository } from '../types';
@@ -55,6 +56,15 @@ class FirebaseTaskRepository implements TaskRepository {
   async deleteTask(id: string): Promise<void> {
     const docRef = doc(this.getCollection(), String(id));
     await deleteDoc(docRef);
+  }
+
+  async reorderTasks(_dateKey: string, orderedIds: string[]): Promise<void> {
+    const batch = writeBatch(db);
+    orderedIds.forEach((id, index) => {
+      const docRef = doc(this.getCollection(), String(id));
+      batch.update(docRef, { order: index + 1 });
+    });
+    await batch.commit();
   }
 
   onTasksChange(date: string, callback: (tasks: Task[]) => void): () => void {

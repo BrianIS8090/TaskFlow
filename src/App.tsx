@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { DragEvent } from 'react';
 import { Sidebar } from './components/Layout/Sidebar';
 import { TaskItem } from './components/Tasks/TaskItem';
 import { LoginForm } from './components/Auth/LoginForm';
@@ -34,6 +35,7 @@ function App() {
     toggleCheckpoint,
     deleteCheckpoint,
     updateCheckpoint,
+    reorderTasks,
     loading: tasksLoading
   } = useTasks(dateKey);
 
@@ -62,6 +64,85 @@ function App() {
 
   const incompleteTasks = tasks.filter(t => !t.completed);
   const completedTasks = tasks.filter(t => t.completed);
+  const mainRef = useRef<HTMLElement | null>(null);
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+  const [orderedIncompleteIds, setOrderedIncompleteIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!draggedTaskId) {
+      setOrderedIncompleteIds(incompleteTasks.map(task => String(task.id)));
+    }
+  }, [draggedTaskId, incompleteTasks, dateKey]);
+
+  const orderedIncompleteTasks = useMemo(() => {
+    const taskMap = new Map(incompleteTasks.map(task => [String(task.id), task]));
+    const ordered = orderedIncompleteIds
+      .map(id => taskMap.get(id))
+      .filter((task): task is NonNullable<typeof task> => Boolean(task));
+    const remaining = incompleteTasks.filter(task => !orderedIncompleteIds.includes(String(task.id)));
+    return [...ordered, ...remaining];
+  }, [incompleteTasks, orderedIncompleteIds]);
+
+  const handleAutoScroll = (clientY: number) => {
+    if (!mainRef.current) {
+      return;
+    }
+    const rect = mainRef.current.getBoundingClientRect();
+    const threshold = 80;
+    const scrollStep = 18;
+
+    if (clientY - rect.top < threshold) {
+      mainRef.current.scrollTop -= scrollStep;
+    } else if (rect.bottom - clientY < threshold) {
+      mainRef.current.scrollTop += scrollStep;
+    }
+  };
+
+  const moveIdInList = (list: string[], sourceId: string, targetId: string) => {
+    const next = [...list];
+    const fromIndex = next.indexOf(sourceId);
+    const toIndex = next.indexOf(targetId);
+    if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) {
+      return list;
+    }
+    next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, sourceId);
+    return next;
+  };
+
+  const handleDragStart = (taskId: string) => (event: DragEvent<HTMLDivElement>) => {
+    setDraggedTaskId(taskId);
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', taskId);
+  };
+
+  const handleDragOver = (taskId: string) => (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    handleAutoScroll(event.clientY);
+    if (!draggedTaskId || draggedTaskId === taskId) {
+      return;
+    }
+    setOrderedIncompleteIds(prev => moveIdInList(prev, draggedTaskId, taskId));
+  };
+
+  const handleDrop = async () => {
+    if (!draggedTaskId) {
+      return;
+    }
+    const nextIncompleteIds = orderedIncompleteIds.length
+      ? orderedIncompleteIds
+      : incompleteTasks.map(task => String(task.id));
+    const fullOrderIds = [
+      ...nextIncompleteIds,
+      ...completedTasks.map(task => String(task.id))
+    ];
+    await reorderTasks(dateKey, fullOrderIds);
+    setDraggedTaskId(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedTaskId(null);
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex text-slate-900 dark:text-white font-sans transition-colors duration-300">
@@ -79,7 +160,7 @@ function App() {
         onSearchOpen={() => setIsSearchOpen(true)}
       />
 
-      <main className="flex-1 p-4 lg:p-8 relative overflow-y-auto">
+      <main ref={mainRef} className="flex-1 p-4 lg:p-8 relative overflow-y-auto">
         {/* Mobile Header */}
         <div className="lg:hidden flex items-center justify-between mb-6">
           <button 
@@ -171,28 +252,47 @@ function App() {
         </div>
 
         {/* Tasks List */}
-        <div className="space-y-3">
+        <div
+          className="space-y-3"
+          onDragOver={(event) => {
+            event.preventDefault();
+            handleAutoScroll(event.clientY);
+          }}
+          onDrop={handleDrop}
+        >
           {tasksLoading && tasks.length === 0 ? (
              [1, 2, 3].map(i => (
                <div key={i} className="glass rounded-2xl h-16 animate-pulse" />
              ))
           ) : (
-            incompleteTasks.map((task) => (
-              <TaskItem
+            orderedIncompleteTasks.map((task) => (
+              <div
                 key={task.id}
-                task={task}
-                isExpanded={expandedTaskId === task.id}
-                onToggleExpand={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
-                onToggleComplete={() => toggleTask(String(task.id))}
-                onDelete={() => deleteTask(String(task.id))}
-                onMoveToTomorrow={() => moveTaskToTomorrow(String(task.id))}
-                onMoveToYesterday={() => moveTaskToYesterday(String(task.id))}
-                onUpdateTitle={(title) => updateTaskTitle(String(task.id), title)}
-                onAddCheckpoint={(text) => addCheckpoint(String(task.id), text)}
-                onToggleCheckpoint={(cpId) => toggleCheckpoint(String(task.id), cpId)}
-                onDeleteCheckpoint={(cpId) => deleteCheckpoint(String(task.id), cpId)}
-                onUpdateCheckpoint={(cpId, text) => updateCheckpoint(String(task.id), cpId, text)}
-              />
+                draggable
+                onDragStart={handleDragStart(String(task.id))}
+                onDragOver={handleDragOver(String(task.id))}
+                onDragEnd={handleDragEnd}
+                className={`transition-transform duration-150 ${
+                  draggedTaskId === String(task.id)
+                    ? 'shadow-2xl shadow-black/10 dark:shadow-black/40 scale-[1.02] cursor-grabbing'
+                    : 'cursor-grab'
+                }`}
+              >
+                <TaskItem
+                  task={task}
+                  isExpanded={expandedTaskId === task.id}
+                  onToggleExpand={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
+                  onToggleComplete={() => toggleTask(String(task.id))}
+                  onDelete={() => deleteTask(String(task.id))}
+                  onMoveToTomorrow={() => moveTaskToTomorrow(String(task.id))}
+                  onMoveToYesterday={() => moveTaskToYesterday(String(task.id))}
+                  onUpdateTitle={(title) => updateTaskTitle(String(task.id), title)}
+                  onAddCheckpoint={(text) => addCheckpoint(String(task.id), text)}
+                  onToggleCheckpoint={(cpId) => toggleCheckpoint(String(task.id), cpId)}
+                  onDeleteCheckpoint={(cpId) => deleteCheckpoint(String(task.id), cpId)}
+                  onUpdateCheckpoint={(cpId, text) => updateCheckpoint(String(task.id), cpId, text)}
+                />
+              </div>
             ))
           )}
 

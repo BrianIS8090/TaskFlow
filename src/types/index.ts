@@ -28,6 +28,7 @@ export interface TaskRepository {
   addTask(task: Omit<Task, 'id' | 'createdAt'>): Promise<string | number>;
   updateTask(id: string | number, data: Partial<Task>): Promise<void>;
   deleteTask(id: string | number): Promise<void>;
+  reorderTasks(dateKey: string, orderedIds: string[]): Promise<void>;
   onTasksChange(date: string, callback: (tasks: Task[]) => void): () => void;
   getTasksForMonth(year: number, month: number): Promise<Task[]>;
   getAllTasks(): Promise<Task[]>;

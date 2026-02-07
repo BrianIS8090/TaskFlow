@@ -133,6 +133,10 @@ export function useTasks(date: string) {
     }
   };
 
+  const reorderTasks = async (dateKey: string, orderedIds: string[]) => {
+    await repository.reorderTasks(dateKey, orderedIds);
+  };
+
   return {
     tasks,
     loading,
@@ -145,6 +149,7 @@ export function useTasks(date: string) {
     addCheckpoint,
     toggleCheckpoint,
     deleteCheckpoint,
-    updateCheckpoint
+    updateCheckpoint,
+    reorderTasks
   };
 }

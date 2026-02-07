@@ -5,7 +5,7 @@ class MockTaskRepository implements TaskRepository {
   private listeners: Record<string, ((tasks: Task[]) => void)[]> = {};
 
   async getTasksByDate(date: string): Promise<Task[]> {
-    return this.tasks[date] || [];
+    return this.getSortedTasks(date);
   }
 
   async addTask(taskData: Omit<Task, 'id' | 'createdAt'>): Promise<string | number> {
@@ -20,6 +20,7 @@ class MockTaskRepository implements TaskRepository {
       this.tasks[taskData.date] = [];
     }
     this.tasks[taskData.date].push(newTask);
+    this.sortTasks(taskData.date);
     this.notify(taskData.date);
     return id;
   }
@@ -36,10 +37,13 @@ class MockTaskRepository implements TaskRepository {
           this.tasks[date].splice(index, 1);
           if (!this.tasks[data.date]) this.tasks[data.date] = [];
           this.tasks[data.date].push(updatedTask);
+          this.sortTasks(date);
+          this.sortTasks(data.date);
           this.notify(date);
           this.notify(data.date);
         } else {
           this.tasks[date][index] = updatedTask;
+          this.sortTasks(date);
           this.notify(date);
         }
         return;
@@ -52,16 +56,42 @@ class MockTaskRepository implements TaskRepository {
       const index = this.tasks[date].findIndex(t => t.id === id);
       if (index !== -1) {
         this.tasks[date].splice(index, 1);
+        this.sortTasks(date);
         this.notify(date);
         return;
       }
     }
   }
 
+  async reorderTasks(dateKey: string, orderedIds: string[]): Promise<void> {
+    if (!this.tasks[dateKey]) {
+      return;
+    }
+
+    const taskMap = new Map(this.tasks[dateKey].map(task => [String(task.id), task]));
+    const reordered: Task[] = [];
+
+    orderedIds.forEach((id, index) => {
+      const task = taskMap.get(id);
+      if (task) {
+        reordered.push({ ...task, order: index + 1 });
+        taskMap.delete(id);
+      }
+    });
+
+    const remaining = Array.from(taskMap.values()).map((task, index) => ({
+      ...task,
+      order: reordered.length + index + 1
+    }));
+
+    this.tasks[dateKey] = [...reordered, ...remaining];
+    this.notify(dateKey);
+  }
+
   onTasksChange(date: string, callback: (tasks: Task[]) => void): () => void {
     if (!this.listeners[date]) this.listeners[date] = [];
     this.listeners[date].push(callback);
-    callback(this.tasks[date] || []);
+    callback(this.getSortedTasks(date));
     
     return () => {
       this.listeners[date] = this.listeners[date].filter(l => l !== callback);
@@ -132,8 +162,19 @@ class MockTaskRepository implements TaskRepository {
 
   private notify(date: string) {
     if (this.listeners[date]) {
-      const tasks = this.tasks[date] || [];
+      const tasks = this.getSortedTasks(date);
       this.listeners[date].forEach(callback => callback([...tasks]));
+    }
+  }
+
+  private getSortedTasks(date: string): Task[] {
+    const tasks = this.tasks[date] || [];
+    return [...tasks].sort((a, b) => a.order - b.order);
+  }
+
+  private sortTasks(date: string) {
+    if (this.tasks[date]) {
+      this.tasks[date].sort((a, b) => a.order - b.order);
     }
   }
 }
