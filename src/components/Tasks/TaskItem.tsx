@@ -180,14 +180,14 @@ export const TaskItem: React.FC<TaskItemProps> = ({
               <button
                 onClick={onMoveToYesterday}
                 className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-400 dark:text-white/50 hover:text-purple-500 hover:bg-purple-500/20 transition-all"
-                title="Перенести на вчера"
+                title="Перенести на день назад"
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={onMoveToTomorrow}
                 className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-400 dark:text-white/50 hover:text-orange-500 hover:bg-orange-500/20 transition-all"
-                title="Перенести на завтра"
+                title="Перенести на день вперёд"
               >
                 <ArrowRight className="w-4 h-4" />
               </button>
@@ -238,7 +238,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                     className="w-full px-4 py-2.5 text-left text-sm text-slate-600 dark:text-white/70 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-purple-500 flex items-center gap-3 transition-colors"
                   >
                     <ArrowLeft className="w-4 h-4" />
-                    Перенести на вчера
+                    Перенести на день назад
                   </button>
                   <button
                     onClick={() => {
@@ -248,7 +248,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                     className="w-full px-4 py-2.5 text-left text-sm text-slate-600 dark:text-white/70 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-orange-500 flex items-center gap-3 transition-colors"
                   >
                     <ArrowRight className="w-4 h-4" />
-                    Перенести на завтра
+                    Перенести на день вперёд
                   </button>
                 </>
               )}
