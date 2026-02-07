@@ -267,6 +267,21 @@ function App() {
               setDragOverId(null);
             }
           }}
+          onPointerMove={(event) => {
+            if (!draggedTaskId) {
+              return;
+            }
+            handleAutoScroll(event.clientY);
+          }}
+          onTouchMove={(event) => {
+            if (!draggedTaskId) {
+              return;
+            }
+            const touch = event.touches[0];
+            if (touch) {
+              handleAutoScroll(touch.clientY);
+            }
+          }}
           onDrop={handleDrop}
         >
           {tasksLoading && tasks.length === 0 ? (
