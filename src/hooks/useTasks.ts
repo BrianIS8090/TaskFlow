@@ -43,19 +43,16 @@ export function useTasks(date: string) {
     });
   };
 
-  const toggleTask = async (taskId: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-      // Prevent completing if there are incomplete checkpoints
-      if (!task.completed && task.checkpoints.some(cp => !cp.done)) {
-        return;
-      }
-      const newCompleted = !task.completed;
-      await repository.updateTask(taskId, { 
-        completed: newCompleted,
-        completedAt: newCompleted ? new Date() : null
-      });
+  const toggleTask = async (task: Task) => {
+    // Запрещаем завершение, если есть незакрытые чекпоинты
+    if (!task.completed && task.checkpoints.some(cp => !cp.done)) {
+      return;
     }
+    const newCompleted = !task.completed;
+    await repository.updateTask(task.id, { 
+      completed: newCompleted,
+      completedAt: newCompleted ? new Date() : null
+    });
   };
 
   const deleteTask = async (taskId: string) => {
@@ -66,87 +63,66 @@ export function useTasks(date: string) {
     await repository.updateTask(taskId, { title });
   };
 
-  const moveTaskToTomorrow = async (taskId: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-      const currentDate = new Date(date);
-      currentDate.setDate(currentDate.getDate() + 1);
-      const nextDate = currentDate.toISOString().split('T')[0];
-      await repository.updateTask(taskId, {
-        date: nextDate,
-        postponeCount: (task.postponeCount || 0) + 1
-      });
-    }
+  const moveTaskToTomorrow = async (task: Task) => {
+    const currentDate = task.date ? new Date(task.date) : new Date(date);
+    currentDate.setDate(currentDate.getDate() + 1);
+    const nextDate = currentDate.toISOString().split('T')[0];
+    await repository.updateTask(task.id, {
+      date: nextDate,
+      postponeCount: (task.postponeCount || 0) + 1
+    });
   };
 
-  const moveTaskToYesterday = async (taskId: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-      const currentDate = new Date(date);
-      currentDate.setDate(currentDate.getDate() - 1);
-      const prevDate = currentDate.toISOString().split('T')[0];
-      await repository.updateTask(taskId, {
-        date: prevDate,
-        postponeCount: Math.max((task.postponeCount || 0) - 1, 0)
-      });
-    }
+  const moveTaskToYesterday = async (task: Task) => {
+    const currentDate = task.date ? new Date(task.date) : new Date(date);
+    currentDate.setDate(currentDate.getDate() - 1);
+    const prevDate = currentDate.toISOString().split('T')[0];
+    await repository.updateTask(task.id, {
+      date: prevDate,
+      postponeCount: Math.max((task.postponeCount || 0) - 1, 0)
+    });
   };
 
-  const moveTaskToDate = async (taskId: string, targetDate: Date | string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-      const currentDate = task.date ? new Date(task.date) : new Date(date);
-      const normalizedTarget = typeof targetDate === 'string' ? new Date(targetDate) : targetDate;
-      const dayDiff = differenceInCalendarDays(normalizedTarget, currentDate);
-      const currentPostpone = task.postponeCount || 0;
-      const nextPostpone = Math.max(currentPostpone + dayDiff, 0);
-      await repository.updateTask(taskId, {
-        date: format(normalizedTarget, 'yyyy-MM-dd'),
-        postponeCount: nextPostpone
-      });
-    }
+  const moveTaskToDate = async (task: Task, targetDate: Date | string) => {
+    const currentDate = task.date ? new Date(task.date) : new Date(date);
+    const normalizedTarget = typeof targetDate === 'string' ? new Date(targetDate) : targetDate;
+    const dayDiff = differenceInCalendarDays(normalizedTarget, currentDate);
+    const currentPostpone = task.postponeCount || 0;
+    const nextPostpone = Math.max(currentPostpone + dayDiff, 0);
+    await repository.updateTask(task.id, {
+      date: format(normalizedTarget, 'yyyy-MM-dd'),
+      postponeCount: nextPostpone
+    });
   };
 
-  const addCheckpoint = async (taskId: string, text: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-      const newCheckpoint: Checkpoint = {
-        id: Date.now(),
-        text,
-        done: false
-      };
-      await repository.updateTask(taskId, {
-        checkpoints: [...task.checkpoints, newCheckpoint]
-      });
-    }
+  const addCheckpoint = async (task: Task, text: string) => {
+    const newCheckpoint: Checkpoint = {
+      id: Date.now(),
+      text,
+      done: false
+    };
+    await repository.updateTask(task.id, {
+      checkpoints: [...task.checkpoints, newCheckpoint]
+    });
   };
 
-  const toggleCheckpoint = async (taskId: string, checkpointId: string | number) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-      const updatedCheckpoints = task.checkpoints.map(cp => 
-        cp.id === checkpointId ? { ...cp, done: !cp.done } : cp
-      );
-      await repository.updateTask(taskId, { checkpoints: updatedCheckpoints });
-    }
+  const toggleCheckpoint = async (task: Task, checkpointId: string | number) => {
+    const updatedCheckpoints = task.checkpoints.map(cp => 
+      cp.id === checkpointId ? { ...cp, done: !cp.done } : cp
+    );
+    await repository.updateTask(task.id, { checkpoints: updatedCheckpoints });
   };
 
-  const deleteCheckpoint = async (taskId: string, checkpointId: string | number) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-      const updatedCheckpoints = task.checkpoints.filter(cp => cp.id !== checkpointId);
-      await repository.updateTask(taskId, { checkpoints: updatedCheckpoints });
-    }
+  const deleteCheckpoint = async (task: Task, checkpointId: string | number) => {
+    const updatedCheckpoints = task.checkpoints.filter(cp => cp.id !== checkpointId);
+    await repository.updateTask(task.id, { checkpoints: updatedCheckpoints });
   };
 
-  const updateCheckpoint = async (taskId: string, checkpointId: string | number, text: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (task) {
-      const updatedCheckpoints = task.checkpoints.map(cp =>
-        cp.id === checkpointId ? { ...cp, text: text.trim() } : cp
-      );
-      await repository.updateTask(taskId, { checkpoints: updatedCheckpoints });
-    }
+  const updateCheckpoint = async (task: Task, checkpointId: string | number, text: string) => {
+    const updatedCheckpoints = task.checkpoints.map(cp =>
+      cp.id === checkpointId ? { ...cp, text: text.trim() } : cp
+    );
+    await repository.updateTask(task.id, { checkpoints: updatedCheckpoints });
   };
 
   return {
