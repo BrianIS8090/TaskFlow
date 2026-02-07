@@ -6,6 +6,7 @@ import { useTasks } from './hooks/useTasks';
 import { useAuth } from './context/AuthContext';
 import { Plus, Calendar as CalendarIcon, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SearchModal } from './components/Search/SearchModal';
+import { DatePickerModal } from './components/UI/DatePickerModal';
 import { format, isToday, addDays, subDays } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -16,6 +17,8 @@ function App() {
   const [newTaskText, setNewTaskText] = useState('');
   const [expandedTaskId, setExpandedTaskId] = useState<string | number | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [taskToMoveId, setTaskToMoveId] = useState<string | number | null>(null);
 
   const dateKey = format(selectedDate, 'yyyy-MM-dd');
   
@@ -30,6 +33,7 @@ function App() {
     updateTaskTitle,
     moveTaskToTomorrow,
     moveTaskToYesterday,
+    moveTaskToDate,
     addCheckpoint,
     toggleCheckpoint,
     deleteCheckpoint,
@@ -62,6 +66,25 @@ function App() {
 
   const incompleteTasks = tasks.filter(t => !t.completed);
   const completedTasks = tasks.filter(t => t.completed);
+
+  const handleOpenDatePicker = (taskId: string | number) => {
+    setTaskToMoveId(taskId);
+    setIsDatePickerOpen(true);
+  };
+
+  const handleCloseDatePicker = () => {
+    setIsDatePickerOpen(false);
+    setTaskToMoveId(null);
+  };
+
+  const handleConfirmMoveDate = async (targetDate: Date) => {
+    if (!taskToMoveId) {
+      handleCloseDatePicker();
+      return;
+    }
+    await moveTaskToDate(String(taskToMoveId), targetDate);
+    handleCloseDatePicker();
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex text-slate-900 dark:text-white font-sans transition-colors duration-300">
@@ -187,6 +210,7 @@ function App() {
                 onDelete={() => deleteTask(String(task.id))}
                 onMoveToTomorrow={() => moveTaskToTomorrow(String(task.id))}
                 onMoveToYesterday={() => moveTaskToYesterday(String(task.id))}
+                onMoveToDate={() => handleOpenDatePicker(task.id)}
                 onUpdateTitle={(title) => updateTaskTitle(String(task.id), title)}
                 onAddCheckpoint={(text) => addCheckpoint(String(task.id), text)}
                 onToggleCheckpoint={(cpId) => toggleCheckpoint(String(task.id), cpId)}
@@ -211,6 +235,7 @@ function App() {
                       onDelete={() => deleteTask(String(task.id))}
                       onMoveToTomorrow={() => moveTaskToTomorrow(String(task.id))}
                       onMoveToYesterday={() => moveTaskToYesterday(String(task.id))}
+                      onMoveToDate={() => handleOpenDatePicker(task.id)}
                       onUpdateTitle={(title) => updateTaskTitle(String(task.id), title)}
                       onAddCheckpoint={(text) => addCheckpoint(String(task.id), text)}
                       onToggleCheckpoint={(cpId) => toggleCheckpoint(String(task.id), cpId)}
@@ -240,6 +265,13 @@ function App() {
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
         onSelectDate={setSelectedDate}
+      />
+
+      <DatePickerModal
+        isOpen={isDatePickerOpen}
+        initialDate={selectedDate}
+        onClose={handleCloseDatePicker}
+        onConfirm={handleConfirmMoveDate}
       />
     </div>
   );
