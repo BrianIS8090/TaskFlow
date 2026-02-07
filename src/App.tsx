@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Sidebar } from './components/Layout/Sidebar';
 import { TaskItem } from './components/Tasks/TaskItem';
 import { LoginForm } from './components/Auth/LoginForm';
@@ -8,13 +8,15 @@ import { useAuth } from './context/useAuth';
 import { Plus, Calendar as CalendarIcon, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SearchModal } from './components/Search/SearchModal';
 import { DatePickerModal } from './components/UI/DatePickerModal';
-import { format, isToday, addDays, subDays, startOfWeek, endOfWeek } from 'date-fns';
+import { AddTaskModal } from './components/UI/AddTaskModal';
+import { format, isToday, addDays, subDays, startOfWeek, endOfWeek, startOfDay } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import type { Task } from './types';
 
 function App() {
   const { user, loading: authLoading } = useAuth();
-  const [selectedDate, setSelectedDate] = useState(new Date()); 
+  const [dayDate, setDayDate] = useState(new Date());
+  const [weekAnchorDate, setWeekAnchorDate] = useState(new Date());
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [newTaskText, setNewTaskText] = useState('');
   const [expandedTaskId, setExpandedTaskId] = useState<string | number | null>(null);
@@ -22,13 +24,19 @@ function App() {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [taskToMove, setTaskToMove] = useState<Task | null>(null);
   const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
+  const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+  const [addTaskDate, setAddTaskDate] = useState<Date | null>(null);
 
-  const dateKey = format(selectedDate, 'yyyy-MM-dd');
+  const dateKey = format(dayDate, 'yyyy-MM-dd');
+  const today = useMemo(() => startOfDay(new Date()), []);
+  const isWeekView = viewMode === 'week';
+  const activeDate = isWeekView ? today : dayDate;
   
   // Вызываем хуки всегда, а отсутствие пользователя обрабатываем внутри useTasks.
   const {
     tasks,
     addTask,
+    addTaskToDate,
     toggleTask,
     deleteTask,
     updateTaskTitle,
@@ -41,7 +49,7 @@ function App() {
     updateCheckpoint,
     loading: tasksLoading
   } = useTasks(dateKey);
-  const { tasks: weekTasks, loading: weekTasksLoading } = useWeekTasks(selectedDate);
+  const { tasks: weekTasks, loading: weekTasksLoading } = useWeekTasks(weekAnchorDate);
 
   // 1. Состояние загрузки (проверка авторизации)
   if (authLoading) {
@@ -89,9 +97,8 @@ function App() {
     handleCloseDatePicker();
   };
 
-  const isWeekView = viewMode === 'week';
-  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 });
+  const weekStart = startOfWeek(weekAnchorDate, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(weekAnchorDate, { weekStartsOn: 1 });
   const weekRangeLabel = `${format(weekStart, 'd MMM', { locale: ru })} — ${format(weekEnd, 'd MMM', { locale: ru })}`;
   const weekDays = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
 
@@ -109,11 +116,55 @@ function App() {
   }, {});
 
   const handlePrevDate = () => {
-    setSelectedDate(subDays(selectedDate, isWeekView ? 7 : 1));
+    if (isWeekView) {
+      setWeekAnchorDate(subDays(weekAnchorDate, 7));
+      return;
+    }
+    setDayDate(subDays(dayDate, 1));
   };
 
   const handleNextDate = () => {
-    setSelectedDate(addDays(selectedDate, isWeekView ? 7 : 1));
+    if (isWeekView) {
+      setWeekAnchorDate(addDays(weekAnchorDate, 7));
+      return;
+    }
+    setDayDate(addDays(dayDate, 1));
+  };
+
+  const handleDateSelect = (date: Date) => {
+    if (isWeekView) {
+      setWeekAnchorDate(date);
+      return;
+    }
+    setDayDate(date);
+  };
+
+  const handleOpenAddTaskModal = (date: Date) => {
+    setAddTaskDate(date);
+    setIsAddTaskModalOpen(true);
+  };
+
+  const handleCloseAddTaskModal = () => {
+    setIsAddTaskModalOpen(false);
+    setAddTaskDate(null);
+  };
+
+  const handleConfirmAddTask = async (title: string) => {
+    if (!addTaskDate) return;
+    await addTaskToDate(title, addTaskDate);
+    handleCloseAddTaskModal();
+  };
+
+  const handleViewModeChange = (nextMode: 'day' | 'week') => {
+    setViewMode(nextMode);
+    if (nextMode === 'week') {
+      setWeekAnchorDate(dayDate);
+    }
+  };
+
+  const handleSelectDateFromSearch = (date: Date) => {
+    setDayDate(date);
+    setViewMode('day');
   };
 
   return (
@@ -125,8 +176,8 @@ function App() {
       </div>
 
       <Sidebar 
-        selectedDate={selectedDate}
-        onDateSelect={setSelectedDate}
+        selectedDate={activeDate}
+        onDateSelect={handleDateSelect}
         isMobileOpen={isMobileMenuOpen}
         onCloseMobile={() => setIsMobileMenuOpen(false)}
         onSearchOpen={() => setIsSearchOpen(true)}
@@ -150,7 +201,7 @@ function App() {
                   <ChevronLeft className="w-4 h-4" />
                 </button>
                 <div className="text-slate-900 dark:text-white font-medium capitalize min-w-[100px] text-center">
-                  {isWeekView ? weekRangeLabel : (isToday(selectedDate) ? 'Сегодня' : format(selectedDate, 'd MMMM', { locale: ru }))}
+                  {isWeekView ? weekRangeLabel : (isToday(dayDate) ? 'Сегодня' : format(dayDate, 'd MMMM', { locale: ru }))}
                 </div>
                 <button
                   onClick={handleNextDate}
@@ -160,7 +211,7 @@ function App() {
                 </button>
               </div>
               <span className="text-sm text-slate-500 dark:text-white/50 capitalize">
-                {isWeekView ? 'Неделя' : format(selectedDate, 'EEEE', { locale: ru })}
+                {isWeekView ? 'Неделя' : format(dayDate, 'EEEE', { locale: ru })}
               </span>
             </div>
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-medium">
@@ -170,7 +221,7 @@ function App() {
         <div className="lg:hidden flex justify-center mb-6">
           <div className="flex items-center gap-1 rounded-xl bg-slate-200/70 dark:bg-white/10 p-1">
             <button
-              onClick={() => setViewMode('day')}
+              onClick={() => handleViewModeChange('day')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 viewMode === 'day'
                   ? 'bg-slate-900 text-white dark:bg-white/20 dark:text-white'
@@ -180,7 +231,7 @@ function App() {
               День
             </button>
             <button
-              onClick={() => setViewMode('week')}
+              onClick={() => handleViewModeChange('week')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 viewMode === 'week'
                   ? 'bg-slate-900 text-white dark:bg-white/20 dark:text-white'
@@ -203,10 +254,10 @@ function App() {
             </button>
             <div className="flex flex-col items-center min-w-[180px]">
               <h1 className="text-3xl font-semibold text-slate-900 dark:text-white capitalize text-center">
-                {isWeekView ? weekRangeLabel : (isToday(selectedDate) ? 'Сегодня' : format(selectedDate, 'd MMMM', { locale: ru }))}
+                {isWeekView ? weekRangeLabel : (isToday(dayDate) ? 'Сегодня' : format(dayDate, 'd MMMM', { locale: ru }))}
               </h1>
               <span className="text-lg text-slate-500 dark:text-white/50 capitalize">
-                {isWeekView ? 'Неделя' : format(selectedDate, 'EEEE', { locale: ru })}
+                {isWeekView ? 'Неделя' : format(dayDate, 'EEEE', { locale: ru })}
               </span>
             </div>
             <button
@@ -228,7 +279,7 @@ function App() {
           <div className="flex justify-center mt-4">
             <div className="flex items-center gap-1 rounded-xl bg-slate-200/70 dark:bg-white/10 p-1">
               <button
-                onClick={() => setViewMode('day')}
+                onClick={() => handleViewModeChange('day')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   viewMode === 'day'
                     ? 'bg-slate-900 text-white dark:bg-white/20 dark:text-white'
@@ -238,7 +289,7 @@ function App() {
                 День
               </button>
               <button
-                onClick={() => setViewMode('week')}
+                onClick={() => handleViewModeChange('week')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   viewMode === 'week'
                     ? 'bg-slate-900 text-white dark:bg-white/20 dark:text-white'
@@ -252,24 +303,26 @@ function App() {
         </div>
 
         {/* Добавление задачи */}
-        <div className="glass rounded-2xl p-4 mb-6">
-          <div className="flex gap-3">
-            <input
-              type="text"
-              value={newTaskText}
-              onChange={(e) => setNewTaskText(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddTask()}
-              placeholder="Добавить задачу..."
-              className="flex-1 bg-transparent text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 outline-none text-lg"
-            />
-            <button 
-              onClick={handleAddTask}
-              className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center text-white hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/20 active:scale-95"
-            >
-              <Plus className="w-5 h-5" />
-            </button>
+        {!isWeekView && (
+          <div className="glass rounded-2xl p-4 mb-6">
+            <div className="flex gap-3">
+              <input
+                type="text"
+                value={newTaskText}
+                onChange={(e) => setNewTaskText(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddTask()}
+                placeholder="Добавить задачу..."
+                className="flex-1 bg-transparent text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 outline-none text-lg"
+              />
+              <button 
+                onClick={handleAddTask}
+                className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center text-white hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/20 active:scale-95"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Список задач */}
         {isWeekView ? (
@@ -291,13 +344,22 @@ function App() {
                     const dayCompleted = dayTasks.filter(task => task.completed);
                     return (
                       <div key={dayKey} className="space-y-3">
-                        <div className="flex items-baseline justify-between px-1">
-                          <div className="text-sm font-semibold text-slate-700 dark:text-white/80 capitalize">
-                            {format(day, 'EEEE', { locale: ru })}
+                        <div className="flex items-center justify-between px-1">
+                          <div>
+                            <div className="text-sm font-semibold text-slate-700 dark:text-white/80 capitalize">
+                              {format(day, 'EEEE', { locale: ru })}
+                            </div>
+                            <div className="text-xs text-slate-400 dark:text-white/40">
+                              {format(day, 'd MMM', { locale: ru })}
+                            </div>
                           </div>
-                          <div className="text-xs text-slate-400 dark:text-white/40">
-                            {format(day, 'd MMM', { locale: ru })}
-                          </div>
+                          <button
+                            onClick={() => handleOpenAddTaskModal(day)}
+                            className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-white/60 hover:bg-slate-300 dark:hover:bg-white/15 hover:text-slate-900 dark:hover:text-white transition-all"
+                            aria-label="Добавить задачу"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
                         </div>
                         <div className="space-y-2">
                           {dayIncomplete.map(task => (
@@ -364,13 +426,22 @@ function App() {
                     const dayCompleted = dayTasks.filter(task => task.completed);
                     return (
                       <div key={dayKey} className="glass rounded-2xl p-3 flex flex-col gap-3 min-h-[200px]">
-                        <div className="flex flex-col items-start">
-                          <span className="text-sm font-semibold text-slate-700 dark:text-white/80 capitalize">
-                            {format(day, 'EEEE', { locale: ru })}
-                          </span>
-                          <span className="text-xs text-slate-400 dark:text-white/40">
-                            {format(day, 'd MMM', { locale: ru })}
-                          </span>
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <span className="text-sm font-semibold text-slate-700 dark:text-white/80 capitalize">
+                              {format(day, 'EEEE', { locale: ru })}
+                            </span>
+                            <span className="text-xs text-slate-400 dark:text-white/40 block">
+                              {format(day, 'd MMM', { locale: ru })}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => handleOpenAddTaskModal(day)}
+                            className="w-7 h-7 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-white/60 hover:bg-slate-300 dark:hover:bg-white/15 hover:text-slate-900 dark:hover:text-white transition-all"
+                            aria-label="Добавить задачу"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                         <div className="space-y-2">
                           {dayIncomplete.map(task => (
@@ -512,15 +583,23 @@ function App() {
       <SearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
-        onSelectDate={setSelectedDate}
+        onSelectDate={handleSelectDateFromSearch}
       />
 
       <DatePickerModal
-        key={isDatePickerOpen ? selectedDate.toISOString() : 'closed'}
+        key={isDatePickerOpen ? dayDate.toISOString() : 'closed'}
         isOpen={isDatePickerOpen}
-        initialDate={selectedDate}
+        initialDate={dayDate}
         onClose={handleCloseDatePicker}
         onConfirm={handleConfirmMoveDate}
+      />
+
+      <AddTaskModal
+        key={isAddTaskModalOpen && addTaskDate ? addTaskDate.toISOString() : 'closed'}
+        isOpen={isAddTaskModalOpen && !!addTaskDate}
+        date={addTaskDate ?? today}
+        onClose={handleCloseAddTaskModal}
+        onConfirm={handleConfirmAddTask}
       />
     </div>
   );

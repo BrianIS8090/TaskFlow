@@ -42,6 +42,21 @@ export function useTasks(date: string) {
     });
   };
 
+  const addTaskToDate = async (title: string, targetDate: Date | string) => {
+    const normalizedDate = typeof targetDate === 'string'
+      ? targetDate
+      : format(targetDate, 'yyyy-MM-dd');
+    await repository.addTask({
+      title,
+      date: normalizedDate,
+      completed: false,
+      order: tasks.length + 1,
+      checkpoints: [],
+      completedAt: null,
+      postponeCount: 0
+    });
+  };
+
   const toggleTask = async (task: Task) => {
     // Запрещаем завершение, если есть незакрытые чекпоинты
     if (!task.completed && task.checkpoints.some(cp => !cp.done)) {
@@ -128,6 +143,7 @@ export function useTasks(date: string) {
     tasks,
     loading: loadedDate !== date,
     addTask,
+    addTaskToDate,
     toggleTask,
     deleteTask,
     updateTaskTitle,
