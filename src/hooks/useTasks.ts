@@ -3,21 +3,21 @@ import { differenceInCalendarDays, format } from 'date-fns';
 import type { Task, Checkpoint } from '../types';
 import { mockTaskRepository } from '../services/mockTasks';
 import { createFirebaseRepository } from '../services/firebaseTasks';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 
 export function useTasks(date: string) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loadedDate, setLoadedDate] = useState('');
   const { user } = useAuth();
   
-  // Decide which repository to use based on auth state
+  // Выбираем репозиторий в зависимости от статуса авторизации
   const repository = useMemo(() => {
-    // If user is logged in, use Firebase
+    // Если пользователь авторизован, используем Firebase
     if (user) {
       return createFirebaseRepository(user.uid);
     }
 
-    // Default to mock (should not be reached in production if auth guarded)
+    // По умолчанию используем mock (в проде сюда не должны попадать при защите авторизации)
     return mockTaskRepository;
   }, [user]);
 
@@ -28,7 +28,7 @@ export function useTasks(date: string) {
     });
 
     return () => unsubscribe();
-  }, [date, repository]); // Re-subscribe if repository changes
+  }, [date, repository]); // Повторная подписка при смене репозитория
 
   const addTask = async (title: string) => {
     await repository.addTask({

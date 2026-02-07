@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { User } from 'firebase/auth';
 import { 
   onAuthStateChanged, 
@@ -8,19 +8,9 @@ import {
   signInWithCredential
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-// @ts-ignore
 import { start, onUrl } from '@fabianlars/tauri-plugin-oauth';
-// @ts-ignore
 import { open } from '@tauri-apps/plugin-shell';
-
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  signInWithGoogle: () => Promise<void>;
-  logout: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | null>(null);
+import { AuthContext } from './authContextBase';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -36,8 +26,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signInWithGoogle = async () => {
     try {
-      // @ts-ignore
-      const isTauri = !!(window.__TAURI_INTERNALS__ || window.__TAURI__);
+      const tauriWindow = window as Window & {
+        __TAURI_INTERNALS__?: unknown;
+        __TAURI__?: unknown;
+      };
+      const isTauri = !!(tauriWindow.__TAURI_INTERNALS__ || tauriWindow.__TAURI__);
       
       if (isTauri) {
         const port = 14205;
@@ -46,25 +39,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         console.log("Setting up OAuth listener...");
         
-        // Create a promise that resolves when the redirect URL is captured
-        const responsePromise = new Promise<string>(async (resolve, reject) => {
-            const unlisten = await onUrl((url: string) => {
-                console.log("Captured OAuth URL via listener:", url);
-                unlisten(); // Stop listening
-                resolve(url);
+        // Создаём промис, который завершится при получении URL редиректа
+        const responsePromise = new Promise<string>((resolve, reject) => {
+          let unlisten: (() => void) | null = null;
+
+          const setupListener = async () => {
+            const stopListening = await onUrl((url: string) => {
+              console.log("Captured OAuth URL via listener:", url);
+              stopListening(); // Останавливаем слушатель
+              resolve(url);
             });
-            // Optional: Timeout reject if user abandons flow
-            setTimeout(() => {
-                unlisten();
-                reject(new Error("OAuth timeout"));
-            }, 60000); // 60 seconds timeout
+            unlisten = stopListening;
+          };
+
+          setupListener().catch(reject);
+
+          // Таймаут на случай, если пользователь прервёт процесс
+          setTimeout(() => {
+            if (unlisten) {
+              unlisten();
+            }
+            reject(new Error("OAuth timeout"));
+          }, 60000); // Таймаут 60 секунд
         });
 
         console.log("Starting OAuth server on port", port);
         const serverPort = await start({ ports: [port] });
         console.log("OAuth server started on port:", serverPort);
         
-        // Construct Google Auth URL
+        // Формируем URL для Google OAuth
         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` + 
           `response_type=id_token` + 
           `&client_id=${clientId}` + 
@@ -75,13 +78,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log("Opening browser at:", authUrl);
         await open(authUrl);
 
-        // Wait for the URL from the listener
+        // Ждём URL из слушателя
         const responseUrl = await responsePromise;
         
-        // Parse the ID token from the hash fragment
-        // The responseUrl will look like: http://localhost:14205/#id_token=...
+        // Достаём ID токен из hash-фрагмента
+        // URL будет выглядеть так: http://localhost:14205/#id_token=...
         const urlObj = new URL(responseUrl);
-        const hashParams = new URLSearchParams(urlObj.hash.substring(1)); // Remove leading '#'
+        const hashParams = new URLSearchParams(urlObj.hash.substring(1)); // Убираем ведущий '#'
         const idToken = hashParams.get('id_token');
 
         if (!idToken) {
@@ -89,12 +92,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         console.log("Got ID Token, signing in to Firebase...");
-        // Sign in to Firebase
+        // Входим в Firebase
         const credential = GoogleAuthProvider.credential(idToken);
         await signInWithCredential(auth, credential);
 
       } else {
-        // Web fallback
+        // Веб-вариант входа
         const provider = new GoogleAuthProvider();
         await signInWithPopup(auth, provider);
       }
@@ -113,10 +116,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       {!loading && children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within an AuthProvider');
-  return context;
 };

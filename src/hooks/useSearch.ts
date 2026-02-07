@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import type { Task, Checkpoint } from '../types';
 import { createFirebaseRepository } from '../services/firebaseTasks';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 
 export interface SearchResult {
   type: 'task' | 'checkpoint';

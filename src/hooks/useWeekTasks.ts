@@ -3,7 +3,7 @@ import { format, startOfWeek, endOfWeek } from 'date-fns';
 import type { Task } from '../types';
 import { mockTaskRepository } from '../services/mockTasks';
 import { createFirebaseRepository } from '../services/firebaseTasks';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 
 type MonthKey = {
   year: number;

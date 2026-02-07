@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Check, User as UserIcon, LogOut, LogIn, Search, Sun, Moon } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, isToday } from 'date-fns';
 import { ru } from 'date-fns/locale';
-import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/useAuth';
+import { useTheme } from '../../context/useTheme';
 import { LoginForm } from '../Auth/LoginForm';
 import { useCalendarStats } from '../../hooks/useCalendarStats';
 
@@ -43,7 +43,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <>
       {showLogin && <LoginForm onClose={() => setShowLogin(false)} />}
       
-      {/* Mobile overlay */}
+      {/* Мобильная подложка */}
       {isMobileOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -57,7 +57,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         <div className="p-6 h-full flex flex-col overflow-y-auto">
-          {/* Logo & User */}
+          {/* Логотип и пользователь */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
@@ -97,7 +97,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
 
-          {/* Calendar Navigation */}
+          {/* Навигация по календарю */}
           <div className="mb-4">
             <div className="flex items-center justify-between mb-4">
               <button 
@@ -117,7 +117,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </button>
             </div>
 
-            {/* Calendar Grid */}
+            {/* Сетка календаря */}
             <div className="grid grid-cols-7 gap-1 mb-2">
               {weekDays.map(day => (
                 <div key={day} className="text-center text-slate-400 dark:text-white/40 text-xs py-2">
@@ -148,7 +148,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   >
                     {format(day, 'd')}
                     
-                    {/* Indicators */}
+                    {/* Индикаторы */}
                     {stats && !isSelected && isCurrentMonth && (
                       <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full 
                         ${stats.allCompleted ? 'bg-green-500 dark:bg-green-400' : 'bg-orange-500 dark:bg-orange-400'}`} 
@@ -160,7 +160,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
 
-          {/* Search Button */}
+          {/* Кнопка поиска */}
           <button
             onClick={() => {
               onSearchOpen();
@@ -172,7 +172,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span className="text-sm">Поиск задач...</span>
           </button>
 
-          {/* User Actions */}
+          {/* Действия пользователя */}
           <div className="mt-auto pt-4 border-t border-slate-200 dark:border-white/10">
             {user && (
               <div className="space-y-2">

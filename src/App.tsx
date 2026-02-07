@@ -4,7 +4,7 @@ import { TaskItem } from './components/Tasks/TaskItem';
 import { LoginForm } from './components/Auth/LoginForm';
 import { useTasks } from './hooks/useTasks';
 import { useWeekTasks } from './hooks/useWeekTasks';
-import { useAuth } from './context/AuthContext';
+import { useAuth } from './context/useAuth';
 import { Plus, Calendar as CalendarIcon, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SearchModal } from './components/Search/SearchModal';
 import { DatePickerModal } from './components/UI/DatePickerModal';
@@ -25,9 +25,7 @@ function App() {
 
   const dateKey = format(selectedDate, 'yyyy-MM-dd');
   
-  // Conditionally call hooks logic only if authenticated to avoid errors
-  // But hooks must be called unconditionally in React. 
-  // We handle the "no user" case inside useTasks safely.
+  // Вызываем хуки всегда, а отсутствие пользователя обрабатываем внутри useTasks.
   const {
     tasks,
     addTask,
@@ -45,7 +43,7 @@ function App() {
   } = useTasks(dateKey);
   const { tasks: weekTasks, loading: weekTasksLoading } = useWeekTasks(selectedDate);
 
-  // 1. Loading State (Checking Auth)
+  // 1. Состояние загрузки (проверка авторизации)
   if (authLoading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-900 dark:text-white">
@@ -54,13 +52,13 @@ function App() {
     );
   }
 
-  // 2. Not Authenticated -> Show Login Form (в Tauri работаем без авторизации)
+  // 2. Нет авторизации -> показываем форму входа (в Tauri работаем без авторизации)
   const isTauri = '__TAURI__' in window;
   if (!user && !isTauri) {
     return <LoginForm />;
   }
 
-  // 3. Authenticated -> Show App
+  // 3. Авторизован -> показываем приложение
   const handleAddTask = () => {
     if (newTaskText.trim()) {
       addTask(newTaskText.trim());
@@ -120,7 +118,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex text-slate-900 dark:text-white font-sans transition-colors duration-300">
-      {/* Ambient background */}
+      {/* Фоновая подсветка */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/3 w-[600px] h-[600px] bg-blue-500/10 dark:bg-blue-500/5 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-500/10 dark:bg-purple-500/5 rounded-full blur-3xl"></div>
@@ -135,7 +133,7 @@ function App() {
       />
 
       <main className="flex-1 p-4 lg:p-8 relative overflow-y-auto">
-        {/* Mobile Header */}
+        {/* Заголовок для мобильной версии */}
         <div className="lg:hidden flex items-center justify-between mb-6">
           <button 
             onClick={() => setIsMobileMenuOpen(true)}
@@ -194,7 +192,7 @@ function App() {
           </div>
         </div>
 
-        {/* Date Header */}
+        {/* Заголовок даты */}
         <div className="hidden lg:block mb-8 animate-fade-in">
           <div className="flex items-center justify-center gap-10 mb-1">
             <button
@@ -253,7 +251,7 @@ function App() {
           </div>
         </div>
 
-        {/* Add Task */}
+        {/* Добавление задачи */}
         <div className="glass rounded-2xl p-4 mb-6">
           <div className="flex gap-3">
             <input
@@ -273,7 +271,7 @@ function App() {
           </div>
         </div>
 
-        {/* Tasks List */}
+        {/* Список задач */}
         {isWeekView ? (
           <div className="space-y-6">
             {weekTasksLoading && weekTasks.length === 0 ? (
@@ -284,7 +282,7 @@ function App() {
               </div>
             ) : (
               <>
-                {/* Mobile Week List */}
+                {/* Недельный список для мобильной версии */}
                 <div className="space-y-4 lg:hidden">
                   {weekDays.map((day) => {
                     const dayKey = format(day, 'yyyy-MM-dd');
@@ -357,7 +355,7 @@ function App() {
                   })}
                 </div>
 
-                {/* Desktop Week Columns */}
+                {/* Колонки по дням для десктопа */}
                 <div className="hidden lg:grid grid-cols-7 gap-4">
                   {weekDays.map((day) => {
                     const dayKey = format(day, 'yyyy-MM-dd');
@@ -469,7 +467,7 @@ function App() {
               ))
             )}
 
-            {/* Completed Section */}
+            {/* Блок выполненных задач */}
             {completedTasks.length > 0 && (
               <div className="mt-8 animate-fade-in">
                 <h3 className="text-slate-400 dark:text-white/40 text-sm font-medium mb-3 uppercase tracking-wider">Выполнено</h3>
@@ -497,7 +495,7 @@ function App() {
               </div>
             )}
 
-            {/* Empty State */}
+            {/* Пустое состояние */}
             {!tasksLoading && tasks.length === 0 && (
               <div className="text-center py-16 animate-fade-in">
                 <div className="w-20 h-20 bg-slate-200 dark:bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-4">
@@ -518,6 +516,7 @@ function App() {
       />
 
       <DatePickerModal
+        key={isDatePickerOpen ? selectedDate.toISOString() : 'closed'}
         isOpen={isDatePickerOpen}
         initialDate={selectedDate}
         onClose={handleCloseDatePicker}
