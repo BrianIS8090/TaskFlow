@@ -139,6 +139,14 @@ export function useTasks(date: string) {
     await repository.updateTask(String(task.id), { checkpoints: updatedCheckpoints });
   };
 
+  const updateTasksOrder = async (orderedTasks: Task[]) => {
+    await Promise.all(
+      orderedTasks.map((task, index) =>
+        repository.updateTask(String(task.id), { order: index + 1 })
+      )
+    );
+  };
+
   return {
     tasks,
     loading: loadedDate !== date,
@@ -153,6 +161,7 @@ export function useTasks(date: string) {
     addCheckpoint,
     toggleCheckpoint,
     deleteCheckpoint,
-    updateCheckpoint
+    updateCheckpoint,
+    updateTasksOrder
   };
 }

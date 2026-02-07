@@ -7,6 +7,12 @@
     "module": "ESNext",
     "types": ["vite/client"],
     "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@dnd-kit/core": ["src/lib/dnd-kit/core.tsx"],
+      "@dnd-kit/sortable": ["src/lib/dnd-kit/sortable.tsx"],
+      "@dnd-kit/utilities": ["src/lib/dnd-kit/utilities"]
+    },
 
     /* Bundler mode */
     "moduleResolution": "bundler",

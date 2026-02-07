@@ -5,7 +5,7 @@ import type { Task } from '../../types';
 import { CheckpointsList } from './CheckpointsList';
 import { ConfirmDialog } from '../UI/ConfirmDialog';
 
-interface TaskItemProps {
+export interface TaskItemProps {
   task: Task;
   isExpanded: boolean;
   onToggleExpand: () => void;
