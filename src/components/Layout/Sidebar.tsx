@@ -13,6 +13,8 @@ interface SidebarProps {
   isMobileOpen: boolean;
   onCloseMobile: () => void;
   onSearchOpen: () => void;
+  viewMode: 'day' | 'week';
+  onToggleViewMode: (mode: 'day' | 'week') => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
@@ -20,7 +22,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onDateSelect, 
   isMobileOpen, 
   onCloseMobile,
-  onSearchOpen
+  onSearchOpen,
+  viewMode,
+  onToggleViewMode
 }) => {
   const [calendarDate, setCalendarDate] = useState(new Date(2026, 1, 1));
   const [showLogin, setShowLogin] = useState(false);
@@ -67,6 +71,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             
             <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => onToggleViewMode('day')}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium transition-all ${
+                    viewMode === 'day'
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-white/60 hover:bg-slate-300 dark:hover:bg-white/15 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                  title="Дневной вид"
+                >
+                  День
+                </button>
+                <button
+                  onClick={() => onToggleViewMode('week')}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-medium transition-all ${
+                    viewMode === 'week'
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-white/60 hover:bg-slate-300 dark:hover:bg-white/15 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                  title="Недельный вид"
+                >
+                  Нед
+                </button>
+              </div>
               <button
                 onClick={toggleTheme}
                 className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-white/60 hover:bg-slate-300 dark:hover:bg-white/15 hover:text-slate-900 dark:hover:text-white transition-all"
