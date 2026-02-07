@@ -12,7 +12,7 @@ type MonthKey = {
 
 export function useWeekTasks(anchorDate: Date) {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadedRange, setLoadedRange] = useState('');
   const { user } = useAuth();
 
   const repository = useMemo(() => {
@@ -44,7 +44,6 @@ export function useWeekTasks(anchorDate: Date) {
   }, [weekStart, weekEnd]);
 
   useEffect(() => {
-    setLoading(true);
     const monthlyTasks = new Map<string, Task[]>();
 
     const unsubscribes = monthsToLoad.map(({ year, month }) =>
@@ -60,7 +59,7 @@ export function useWeekTasks(anchorDate: Date) {
             return a.date.localeCompare(b.date);
           });
         setTasks(filtered);
-        setLoading(false);
+        setLoadedRange(`${rangeStart}:${rangeEnd}`);
       })
     );
 
@@ -71,7 +70,7 @@ export function useWeekTasks(anchorDate: Date) {
 
   return {
     tasks,
-    loading,
+    loading: loadedRange !== `${rangeStart}:${rangeEnd}`,
     weekStart,
     weekEnd
   };

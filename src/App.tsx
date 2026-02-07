@@ -43,6 +43,7 @@ function App() {
     updateCheckpoint,
     loading: tasksLoading
   } = useTasks(dateKey);
+  const { tasks: weekTasks, loading: weekTasksLoading } = useWeekTasks(selectedDate);
 
   // 1. Loading State (Checking Auth)
   if (authLoading) {
@@ -67,7 +68,6 @@ function App() {
     }
   };
 
-  const { tasks: weekTasks, loading: weekTasksLoading } = useWeekTasks(selectedDate);
   const incompleteTasks = tasks.filter(t => !t.completed);
   const completedTasks = tasks.filter(t => t.completed);
   const weekIncompleteTasks = weekTasks.filter(t => !t.completed);

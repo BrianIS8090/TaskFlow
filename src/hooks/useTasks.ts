@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 
 export function useTasks(date: string) {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadedDate, setLoadedDate] = useState('');
   const { user } = useAuth();
   
   // Decide which repository to use based on auth state
@@ -22,10 +22,9 @@ export function useTasks(date: string) {
   }, [user]);
 
   useEffect(() => {
-    setLoading(true);
     const unsubscribe = repository.onTasksChange(date, (updatedTasks) => {
       setTasks(updatedTasks);
-      setLoading(false);
+      setLoadedDate(date);
     });
 
     return () => unsubscribe();
@@ -49,7 +48,7 @@ export function useTasks(date: string) {
       return;
     }
     const newCompleted = !task.completed;
-    await repository.updateTask(task.id, { 
+    await repository.updateTask(String(task.id), { 
       completed: newCompleted,
       completedAt: newCompleted ? new Date() : null
     });
@@ -67,7 +66,7 @@ export function useTasks(date: string) {
     const currentDate = task.date ? new Date(task.date) : new Date(date);
     currentDate.setDate(currentDate.getDate() + 1);
     const nextDate = currentDate.toISOString().split('T')[0];
-    await repository.updateTask(task.id, {
+    await repository.updateTask(String(task.id), {
       date: nextDate,
       postponeCount: (task.postponeCount || 0) + 1
     });
@@ -77,7 +76,7 @@ export function useTasks(date: string) {
     const currentDate = task.date ? new Date(task.date) : new Date(date);
     currentDate.setDate(currentDate.getDate() - 1);
     const prevDate = currentDate.toISOString().split('T')[0];
-    await repository.updateTask(task.id, {
+    await repository.updateTask(String(task.id), {
       date: prevDate,
       postponeCount: Math.max((task.postponeCount || 0) - 1, 0)
     });
@@ -89,7 +88,7 @@ export function useTasks(date: string) {
     const dayDiff = differenceInCalendarDays(normalizedTarget, currentDate);
     const currentPostpone = task.postponeCount || 0;
     const nextPostpone = Math.max(currentPostpone + dayDiff, 0);
-    await repository.updateTask(task.id, {
+    await repository.updateTask(String(task.id), {
       date: format(normalizedTarget, 'yyyy-MM-dd'),
       postponeCount: nextPostpone
     });
@@ -101,7 +100,7 @@ export function useTasks(date: string) {
       text,
       done: false
     };
-    await repository.updateTask(task.id, {
+    await repository.updateTask(String(task.id), {
       checkpoints: [...task.checkpoints, newCheckpoint]
     });
   };
@@ -110,24 +109,24 @@ export function useTasks(date: string) {
     const updatedCheckpoints = task.checkpoints.map(cp => 
       cp.id === checkpointId ? { ...cp, done: !cp.done } : cp
     );
-    await repository.updateTask(task.id, { checkpoints: updatedCheckpoints });
+    await repository.updateTask(String(task.id), { checkpoints: updatedCheckpoints });
   };
 
   const deleteCheckpoint = async (task: Task, checkpointId: string | number) => {
     const updatedCheckpoints = task.checkpoints.filter(cp => cp.id !== checkpointId);
-    await repository.updateTask(task.id, { checkpoints: updatedCheckpoints });
+    await repository.updateTask(String(task.id), { checkpoints: updatedCheckpoints });
   };
 
   const updateCheckpoint = async (task: Task, checkpointId: string | number, text: string) => {
     const updatedCheckpoints = task.checkpoints.map(cp =>
       cp.id === checkpointId ? { ...cp, text: text.trim() } : cp
     );
-    await repository.updateTask(task.id, { checkpoints: updatedCheckpoints });
+    await repository.updateTask(String(task.id), { checkpoints: updatedCheckpoints });
   };
 
   return {
     tasks,
-    loading,
+    loading: loadedDate !== date,
     addTask,
     toggleTask,
     deleteTask,
