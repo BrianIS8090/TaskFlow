@@ -67,10 +67,12 @@ function App() {
   const mainRef = useRef<HTMLElement | null>(null);
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [orderedIncompleteIds, setOrderedIncompleteIds] = useState<string[]>([]);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!draggedTaskId) {
       setOrderedIncompleteIds(incompleteTasks.map(task => String(task.id)));
+      setDragOverId(null);
     }
   }, [draggedTaskId, incompleteTasks, dateKey]);
 
@@ -112,6 +114,7 @@ function App() {
 
   const handleDragStart = (taskId: string) => (event: DragEvent<HTMLDivElement>) => {
     setDraggedTaskId(taskId);
+    setDragOverId(taskId);
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/plain', taskId);
   };
@@ -122,6 +125,7 @@ function App() {
     if (!draggedTaskId || draggedTaskId === taskId) {
       return;
     }
+    setDragOverId(taskId);
     setOrderedIncompleteIds(prev => moveIdInList(prev, draggedTaskId, taskId));
   };
 
@@ -138,10 +142,12 @@ function App() {
     ];
     await reorderTasks(dateKey, fullOrderIds);
     setDraggedTaskId(null);
+    setDragOverId(null);
   };
 
   const handleDragEnd = () => {
     setDraggedTaskId(null);
+    setDragOverId(null);
   };
 
   return (
@@ -257,6 +263,9 @@ function App() {
           onDragOver={(event) => {
             event.preventDefault();
             handleAutoScroll(event.clientY);
+            if (draggedTaskId) {
+              setDragOverId(null);
+            }
           }}
           onDrop={handleDrop}
         >
@@ -265,35 +274,54 @@ function App() {
                <div key={i} className="glass rounded-2xl h-16 animate-pulse" />
              ))
           ) : (
-            orderedIncompleteTasks.map((task) => (
-              <div
-                key={task.id}
-                draggable
-                onDragStart={handleDragStart(String(task.id))}
-                onDragOver={handleDragOver(String(task.id))}
-                onDragEnd={handleDragEnd}
-                className={`transition-transform duration-150 ${
-                  draggedTaskId === String(task.id)
-                    ? 'shadow-2xl shadow-black/10 dark:shadow-black/40 scale-[1.02] cursor-grabbing'
-                    : 'cursor-grab'
-                }`}
-              >
-                <TaskItem
-                  task={task}
-                  isExpanded={expandedTaskId === task.id}
-                  onToggleExpand={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
-                  onToggleComplete={() => toggleTask(String(task.id))}
-                  onDelete={() => deleteTask(String(task.id))}
-                  onMoveToTomorrow={() => moveTaskToTomorrow(String(task.id))}
-                  onMoveToYesterday={() => moveTaskToYesterday(String(task.id))}
-                  onUpdateTitle={(title) => updateTaskTitle(String(task.id), title)}
-                  onAddCheckpoint={(text) => addCheckpoint(String(task.id), text)}
-                  onToggleCheckpoint={(cpId) => toggleCheckpoint(String(task.id), cpId)}
-                  onDeleteCheckpoint={(cpId) => deleteCheckpoint(String(task.id), cpId)}
-                  onUpdateCheckpoint={(cpId, text) => updateCheckpoint(String(task.id), cpId, text)}
+            [
+              ...orderedIncompleteTasks.flatMap((task) => {
+                const taskId = String(task.id);
+                const shouldShowPlaceholder = draggedTaskId && dragOverId === taskId && draggedTaskId !== taskId;
+
+                return [
+                  shouldShowPlaceholder ? (
+                    <div
+                      key={`${task.id}-placeholder`}
+                      className="rounded-2xl border-2 border-dashed border-blue-300/60 dark:border-blue-400/40 h-16 bg-blue-100/30 dark:bg-blue-500/10 transition-all"
+                    />
+                  ) : null,
+                  <div
+                    key={task.id}
+                    draggable
+                    onDragStart={handleDragStart(taskId)}
+                    onDragOver={handleDragOver(taskId)}
+                    onDragEnd={handleDragEnd}
+                    className={`transition-transform duration-200 ${
+                      draggedTaskId === taskId
+                        ? 'shadow-2xl shadow-black/10 dark:shadow-black/40 scale-[1.02] cursor-grabbing opacity-80'
+                        : 'cursor-grab'
+                    }`}
+                  >
+                    <TaskItem
+                      task={task}
+                      isExpanded={expandedTaskId === task.id}
+                      onToggleExpand={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
+                      onToggleComplete={() => toggleTask(taskId)}
+                      onDelete={() => deleteTask(taskId)}
+                      onMoveToTomorrow={() => moveTaskToTomorrow(taskId)}
+                      onMoveToYesterday={() => moveTaskToYesterday(taskId)}
+                      onUpdateTitle={(title) => updateTaskTitle(taskId, title)}
+                      onAddCheckpoint={(text) => addCheckpoint(taskId, text)}
+                      onToggleCheckpoint={(cpId) => toggleCheckpoint(taskId, cpId)}
+                      onDeleteCheckpoint={(cpId) => deleteCheckpoint(taskId, cpId)}
+                      onUpdateCheckpoint={(cpId, text) => updateCheckpoint(taskId, cpId, text)}
+                    />
+                  </div>
+                ].filter((item): item is JSX.Element => Boolean(item));
+              }),
+              draggedTaskId && !dragOverId ? (
+                <div
+                  key="end-placeholder"
+                  className="rounded-2xl border-2 border-dashed border-blue-300/60 dark:border-blue-400/40 h-16 bg-blue-100/30 dark:bg-blue-500/10 transition-all"
                 />
-              </div>
-            ))
+              ) : null
+            ].filter((item): item is JSX.Element => Boolean(item))
           )}
 
           {/* Completed Section */}
