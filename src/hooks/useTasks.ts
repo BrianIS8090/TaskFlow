@@ -139,6 +139,40 @@ export function useTasks(date: string) {
     await repository.updateTask(String(task.id), { checkpoints: updatedCheckpoints });
   };
 
+  const reorderTasks = async (orderedTasks: Task[], targetDate?: string) => {
+    if (orderedTasks.length === 0) return;
+
+    const updates = orderedTasks
+      .map((task, index) => {
+        const nextOrder = index + 1;
+        const nextDate = targetDate ?? task.date;
+        const needsOrderChange = task.order !== nextOrder;
+        const needsDateChange = nextDate !== task.date;
+
+        if (!needsOrderChange && !needsDateChange) {
+          return null;
+        }
+
+        const updateData: Partial<Task> = { order: nextOrder };
+
+        if (needsDateChange) {
+          const currentDate = task.date ? new Date(task.date) : new Date(date);
+          const normalizedTarget = typeof nextDate === 'string' ? new Date(nextDate) : nextDate;
+          const dayDiff = differenceInCalendarDays(normalizedTarget, currentDate);
+          const currentPostpone = task.postponeCount || 0;
+          const nextPostpone = Math.max(currentPostpone + dayDiff, 0);
+          updateData.date = typeof nextDate === 'string' ? nextDate : format(nextDate, 'yyyy-MM-dd');
+          updateData.postponeCount = nextPostpone;
+        }
+
+        return repository.updateTask(String(task.id), updateData);
+      })
+      .filter((promise): promise is Promise<void> => promise !== null);
+
+    if (updates.length === 0) return;
+    await Promise.all(updates);
+  };
+
   return {
     tasks,
     loading: loadedDate !== date,
@@ -153,6 +187,7 @@ export function useTasks(date: string) {
     addCheckpoint,
     toggleCheckpoint,
     deleteCheckpoint,
-    updateCheckpoint
+    updateCheckpoint,
+    reorderTasks
   };
 }
