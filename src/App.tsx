@@ -41,6 +41,8 @@ function App() {
   const [addTaskDate, setAddTaskDate] = useState<Date | null>(null);
   const [dayTaskOrder, setDayTaskOrder] = useState<Task[]>([]);
   const [weekTaskOrder, setWeekTaskOrder] = useState<Record<string, Task[]>>({});
+  const [weekDragSourceContainer, setWeekDragSourceContainer] = useState<string | null>(null);
+  const [isWeekOrderPersisting, setIsWeekOrderPersisting] = useState(false);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
 
   const dateKey = format(dayDate, 'yyyy-MM-dd');
@@ -155,8 +157,11 @@ function App() {
   }, [tasksByDate, weekDays]);
 
   useEffect(() => {
+    if (activeTask || isWeekOrderPersisting) {
+      return;
+    }
     setWeekTaskOrder(weekIncompleteByDate);
-  }, [weekIncompleteByDate]);
+  }, [activeTask, isWeekOrderPersisting, weekIncompleteByDate]);
 
   const taskLookup = useMemo(() => {
     const currentTasks = isWeekView ? weekTasks : tasks;
@@ -250,6 +255,8 @@ function App() {
   };
 
   const handleWeekDragStart = ({ active }: DragStartEvent) => {
+    const activeId = String(active.id);
+    setWeekDragSourceContainer(findWeekContainer(activeId, weekTaskOrder) ?? null);
     setActiveTask(taskLookup.get(String(active.id)) ?? null);
   };
 
@@ -292,61 +299,92 @@ function App() {
   };
 
   const handleWeekDragEnd = async ({ active, over }: DragEndEvent) => {
+    setIsWeekOrderPersisting(true);
     setActiveTask(null);
-    if (!over) return;
+    if (!over) {
+      setWeekDragSourceContainer(null);
+      setIsWeekOrderPersisting(false);
+      return;
+    }
     const activeId = String(active.id);
     const overId = String(over.id);
     const activeContainer = findWeekContainer(activeId, weekTaskOrder);
     const overContainer = findWeekContainer(overId, weekTaskOrder);
-    if (!activeContainer || !overContainer) return;
-
-    if (activeContainer === overContainer) {
-      const containerTasks = weekTaskOrder[activeContainer] ?? [];
-      const oldIndex = containerTasks.findIndex(task => String(task.id) === activeId);
-      if (oldIndex === -1) return;
-
-      const isOverContainer = Object.prototype.hasOwnProperty.call(weekTaskOrder, overId);
-      const newIndex = isOverContainer
-        ? containerTasks.length - 1
-        : containerTasks.findIndex(task => String(task.id) === overId);
-
-      if (newIndex === -1 || oldIndex === newIndex) return;
-
-      const reordered = arrayMove(containerTasks, oldIndex, newIndex);
-      setWeekTaskOrder(prev => ({ ...prev, [activeContainer]: reordered }));
-      await reorderTasks(reordered, activeContainer);
+    if (!activeContainer || !overContainer) {
+      setWeekDragSourceContainer(null);
+      setIsWeekOrderPersisting(false);
       return;
     }
 
-    const sourceTasks = weekTaskOrder[activeContainer] ?? [];
-    const targetTasks = weekTaskOrder[overContainer] ?? [];
-    const isInTarget = targetTasks.some(task => String(task.id) === activeId);
+    try {
+      const sourceContainer = weekDragSourceContainer ?? activeContainer;
+      const movedAcrossContainers = sourceContainer !== overContainer;
 
-    let nextSource = sourceTasks;
-    let nextTarget = targetTasks;
+      if (movedAcrossContainers) {
+        const sourceTasks = weekTaskOrder[sourceContainer] ?? [];
+        const targetTasks = weekTaskOrder[overContainer] ?? [];
+        const draggedTask =
+          targetTasks.find(task => String(task.id) === activeId) ??
+          sourceTasks.find(task => String(task.id) === activeId) ??
+          taskLookup.get(activeId);
 
-    if (!isInTarget) {
-      const activeIndex = sourceTasks.findIndex(task => String(task.id) === activeId);
-      if (activeIndex !== -1) {
-        const movedTask = sourceTasks[activeIndex];
-        nextSource = sourceTasks.filter(task => String(task.id) !== activeId);
-        nextTarget = [...targetTasks, movedTask];
+        if (!draggedTask) {
+          return;
+        }
+
+        const nextSource = sourceTasks.filter(task => String(task.id) !== activeId);
+        const targetWithoutActive = targetTasks.filter(task => String(task.id) !== activeId);
+        const isOverContainer = Object.prototype.hasOwnProperty.call(weekTaskOrder, overId);
+        const overIndex = isOverContainer
+          ? targetWithoutActive.length
+          : targetWithoutActive.findIndex(task => String(task.id) === overId);
+        const insertIndex = overIndex < 0 ? targetWithoutActive.length : overIndex;
+        const nextTarget = [
+          ...targetWithoutActive.slice(0, insertIndex),
+          draggedTask,
+          ...targetWithoutActive.slice(insertIndex)
+        ];
+
         setWeekTaskOrder(prev => ({
           ...prev,
-          [activeContainer]: nextSource,
+          [sourceContainer]: nextSource,
           [overContainer]: nextTarget
         }));
-      }
-    }
 
-    await Promise.all([
-      reorderTasks(nextSource, activeContainer),
-      reorderTasks(nextTarget, overContainer)
-    ]);
+        await Promise.all([
+          reorderTasks(nextSource, sourceContainer),
+          reorderTasks(nextTarget, overContainer)
+        ]);
+        return;
+      }
+
+      if (activeContainer === overContainer) {
+        const containerTasks = weekTaskOrder[activeContainer] ?? [];
+        const oldIndex = containerTasks.findIndex(task => String(task.id) === activeId);
+        if (oldIndex === -1) return;
+
+        const isOverContainer = Object.prototype.hasOwnProperty.call(weekTaskOrder, overId);
+        const newIndex = isOverContainer
+          ? containerTasks.length - 1
+          : containerTasks.findIndex(task => String(task.id) === overId);
+
+        if (newIndex === -1 || oldIndex === newIndex) return;
+
+        const reordered = arrayMove(containerTasks, oldIndex, newIndex);
+        setWeekTaskOrder(prev => ({ ...prev, [activeContainer]: reordered }));
+        await reorderTasks(reordered, activeContainer);
+        return;
+      }
+    } finally {
+      setWeekDragSourceContainer(null);
+      setIsWeekOrderPersisting(false);
+    }
   };
 
   const handleWeekDragCancel = () => {
     setActiveTask(null);
+    setWeekDragSourceContainer(null);
+    setIsWeekOrderPersisting(false);
     setWeekTaskOrder(weekIncompleteByDate);
   };
 
@@ -656,7 +694,7 @@ function App() {
                 </div>
               )}
             </div>
-            <DragOverlay>{renderDragOverlay()}</DragOverlay>
+            <DragOverlay dropAnimation={null}>{renderDragOverlay()}</DragOverlay>
           </DndContext>
         ) : (
           <DndContext
@@ -738,7 +776,7 @@ function App() {
                 </div>
               )}
             </div>
-            <DragOverlay>{renderDragOverlay()}</DragOverlay>
+            <DragOverlay dropAnimation={null}>{renderDragOverlay()}</DragOverlay>
           </DndContext>
         )}
       </main>
