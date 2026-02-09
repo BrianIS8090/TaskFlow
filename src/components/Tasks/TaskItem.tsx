@@ -5,7 +5,7 @@ import type { Task } from '../../types';
 import { CheckpointsList } from './CheckpointsList';
 import { ConfirmDialog } from '../UI/ConfirmDialog';
 
-interface TaskItemProps {
+export interface TaskItemProps {
   task: Task;
   isExpanded: boolean;
   onToggleExpand: () => void;
@@ -19,6 +19,7 @@ interface TaskItemProps {
   onToggleCheckpoint: (id: string | number) => void;
   onDeleteCheckpoint: (id: string | number) => void;
   onUpdateCheckpoint?: (id: string | number, text: string) => void;
+  className?: string;
 }
 
 export const TaskItem: React.FC<TaskItemProps> = ({
@@ -34,7 +35,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   onAddCheckpoint,
   onToggleCheckpoint,
   onDeleteCheckpoint,
-  onUpdateCheckpoint
+  onUpdateCheckpoint,
+  className
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(task.title);
@@ -93,7 +95,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   };
 
   return (
-    <div className="glass rounded-2xl overflow-hidden transition-all hover:bg-slate-200/50 dark:hover:bg-white/[0.07]">
+    <div className={`glass rounded-2xl overflow-hidden transition-all hover:bg-slate-200/50 dark:hover:bg-white/[0.07] ${className ?? ''}`}>
       <div className="p-4 flex items-start gap-4">
         <button
           onClick={handleToggleAttempt}

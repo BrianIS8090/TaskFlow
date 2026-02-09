@@ -5,7 +5,7 @@ class MockTaskRepository implements TaskRepository {
   private listeners: Record<string, ((tasks: Task[]) => void)[]> = {};
 
   async getTasksByDate(date: string): Promise<Task[]> {
-    return this.tasks[date] || [];
+    return this.sortByOrder(this.tasks[date] || []);
   }
 
   async addTask(taskData: Omit<Task, 'id' | 'createdAt'>): Promise<string | number> {
@@ -132,9 +132,13 @@ class MockTaskRepository implements TaskRepository {
 
   private notify(date: string) {
     if (this.listeners[date]) {
-      const tasks = this.tasks[date] || [];
-      this.listeners[date].forEach(callback => callback([...tasks]));
+      const tasks = this.sortByOrder(this.tasks[date] || []);
+      this.listeners[date].forEach(callback => callback(tasks));
     }
+  }
+
+  private sortByOrder(tasks: Task[]) {
+    return [...tasks].sort((a, b) => (a.order || 0) - (b.order || 0));
   }
 }
 
