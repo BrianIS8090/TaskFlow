@@ -20,6 +20,7 @@ export interface TaskItemProps {
   onDeleteCheckpoint: (id: string | number) => void;
   onUpdateCheckpoint?: (id: string | number, text: string) => void;
   className?: string;
+  onInteractionChange?: (isInteracting: boolean) => void;
 }
 
 export const TaskItem: React.FC<TaskItemProps> = ({
@@ -36,12 +37,14 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   onToggleCheckpoint,
   onDeleteCheckpoint,
   onUpdateCheckpoint,
-  className
+  className,
+  onInteractionChange
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(task.title);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [isCheckpointEditing, setIsCheckpointEditing] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
@@ -59,6 +62,11 @@ export const TaskItem: React.FC<TaskItemProps> = ({
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showMobileMenu]);
+
+  useEffect(() => {
+    onInteractionChange?.(isEditing || isCheckpointEditing);
+    return () => onInteractionChange?.(false);
+  }, [isCheckpointEditing, isEditing, onInteractionChange]);
 
   // Обновление позиции меню
   const handleOpenMenu = () => {
@@ -116,6 +124,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                 type="text"
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
+                onMouseDown={(event) => event.stopPropagation()}
+                onTouchStart={(event) => event.stopPropagation()}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleSave();
                   if (e.key === 'Escape') handleCancel();
@@ -166,6 +176,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
               onToggle={onToggleCheckpoint}
               onDelete={onDeleteCheckpoint}
               onUpdate={onUpdateCheckpoint}
+              onEditingStateChange={setIsCheckpointEditing}
             />
           )}
         </div>

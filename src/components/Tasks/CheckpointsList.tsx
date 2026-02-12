@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Check, Trash2, Plus, Pencil, X } from 'lucide-react';
 import type { Checkpoint } from '../../types';
 import { ConfirmDialog } from '../UI/ConfirmDialog';
@@ -9,6 +9,7 @@ interface CheckpointsListProps {
   onDelete: (id: string | number) => void;
   onAdd: (text: string) => void;
   onUpdate?: (id: string | number, text: string) => void;
+  onEditingStateChange?: (isEditing: boolean) => void;
 }
 
 export const CheckpointsList: React.FC<CheckpointsListProps> = ({
@@ -16,12 +17,22 @@ export const CheckpointsList: React.FC<CheckpointsListProps> = ({
   onToggle,
   onDelete,
   onAdd,
-  onUpdate
+  onUpdate,
+  onEditingStateChange
 }) => {
   const [newText, setNewText] = useState('');
   const [editingId, setEditingId] = useState<string | number | null>(null);
   const [editValue, setEditValue] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; checkpointId: string | number | null; text: string }>({ isOpen: false, checkpointId: null, text: '' });
+  const [isInputFocused, setIsInputFocused] = useState(false);
+
+  useEffect(() => {
+    onEditingStateChange?.(editingId !== null || isInputFocused);
+  }, [editingId, isInputFocused, onEditingStateChange]);
+
+  useEffect(() => {
+    return () => onEditingStateChange?.(false);
+  }, [onEditingStateChange]);
 
   const handleAdd = () => {
     if (newText.trim()) {
@@ -69,6 +80,10 @@ export const CheckpointsList: React.FC<CheckpointsListProps> = ({
                 type="text"
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
+                onFocus={() => setIsInputFocused(true)}
+                onBlur={() => setIsInputFocused(false)}
+                onMouseDown={(event) => event.stopPropagation()}
+                onTouchStart={(event) => event.stopPropagation()}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleSaveEdit();
                   if (e.key === 'Escape') handleCancelEdit();
@@ -126,6 +141,10 @@ export const CheckpointsList: React.FC<CheckpointsListProps> = ({
           type="text"
           value={newText}
           onChange={(e) => setNewText(e.target.value)}
+          onFocus={() => setIsInputFocused(true)}
+          onBlur={() => setIsInputFocused(false)}
+          onMouseDown={(event) => event.stopPropagation()}
+          onTouchStart={(event) => event.stopPropagation()}
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
           placeholder="Добавить чекпоинт..."
           className="flex-1 bg-transparent text-sm text-slate-600 dark:text-white/70 placeholder-slate-400 dark:placeholder-white/30 outline-none"

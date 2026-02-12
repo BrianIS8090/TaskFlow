@@ -50,8 +50,8 @@ function App() {
   const isWeekView = viewMode === 'week';
   const activeDate = isWeekView ? today : dayDate;
   const sensors = useSensors(
-    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } })
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 260, tolerance: 6 } })
   );
   
   // Вызываем хуки всегда, а отсутствие пользователя обрабатываем внутри useTasks.
@@ -100,10 +100,34 @@ function App() {
   const incompleteTasks = useMemo(() => tasks.filter(t => !t.completed), [tasks]);
   const completedTasks = useMemo(() => tasks.filter(t => t.completed), [tasks]);
   const weekIncompleteTasks = useMemo(() => weekTasks.filter(t => !t.completed), [weekTasks]);
+  const dayTaskIds = useMemo(() => dayTaskOrder.map(task => String(task.id)), [dayTaskOrder]);
 
   useEffect(() => {
+    if (activeTask) {
+      return;
+    }
     setDayTaskOrder(incompleteTasks);
-  }, [incompleteTasks]);
+  }, [activeTask, incompleteTasks]);
+
+  useEffect(() => {
+    if (!activeTask) {
+      return;
+    }
+
+    const prevOverflow = document.body.style.overflow;
+    const prevTouchAction = document.body.style.touchAction;
+    const prevOverscroll = document.body.style.overscrollBehavior;
+
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+    document.body.style.overscrollBehavior = 'contain';
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.style.touchAction = prevTouchAction;
+      document.body.style.overscrollBehavior = prevOverscroll;
+    };
+  }, [activeTask]);
 
   const handleOpenDatePicker = (task: Task) => {
     setTaskToMove(task);
@@ -124,9 +148,18 @@ function App() {
     handleCloseDatePicker();
   };
 
-  const weekStart = startOfWeek(weekAnchorDate, { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(weekAnchorDate, { weekStartsOn: 1 });
-  const weekRangeLabel = `${format(weekStart, 'd MMM', { locale: ru })} — ${format(weekEnd, 'd MMM', { locale: ru })}`;
+  const weekStart = useMemo(
+    () => startOfWeek(weekAnchorDate, { weekStartsOn: 1 }),
+    [weekAnchorDate]
+  );
+  const weekEnd = useMemo(
+    () => endOfWeek(weekAnchorDate, { weekStartsOn: 1 }),
+    [weekAnchorDate]
+  );
+  const weekRangeLabel = useMemo(
+    () => `${format(weekStart, 'd MMM', { locale: ru })} — ${format(weekEnd, 'd MMM', { locale: ru })}`,
+    [weekStart, weekEnd]
+  );
   const weekDays = useMemo(
     () => Array.from({ length: 7 }, (_, index) => addDays(weekStart, index)),
     [weekStart]
@@ -594,6 +627,7 @@ function App() {
                     const dayKey = format(day, 'yyyy-MM-dd');
                     const dayTasks = tasksByDate[dayKey] || [];
                     const dayIncomplete = weekTaskOrder[dayKey] || [];
+                    const dayIncompleteIds = dayIncomplete.map(task => String(task.id));
                     const dayCompleted = dayTasks.filter(task => task.completed);
                     const hasTasks = dayIncomplete.length > 0 || dayCompleted.length > 0;
 
@@ -622,7 +656,8 @@ function App() {
                         </div>
                         <div className="space-y-2">
                           <SortableContext
-                            items={dayIncomplete.map(task => String(task.id))}
+                            key={`${dayKey}:${dayIncompleteIds.join('|')}`}
+                            items={dayIncompleteIds}
                             strategy={verticalListSortingStrategy}
                           >
                             {dayIncomplete.map(task => (
@@ -701,6 +736,7 @@ function App() {
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragStart={handleDayDragStart}
+            onDragOver={noop}
             onDragEnd={handleDayDragEnd}
             onDragCancel={handleDayDragCancel}
           >
@@ -711,7 +747,8 @@ function App() {
                  ))
               ) : (
                 <SortableContext
-                  items={dayTaskOrder.map(task => String(task.id))}
+                  key={`day:${dayTaskIds.join('|')}`}
+                  items={dayTaskIds}
                   strategy={verticalListSortingStrategy}
                 >
                   {dayTaskOrder.map((task) => (
@@ -788,7 +825,7 @@ function App() {
       />
 
       <DatePickerModal
-        key={isDatePickerOpen ? dayDate.toISOString() : 'closed'}
+        key={isDatePickerOpen ? `date-picker:${dayDate.toISOString()}` : 'date-picker:closed'}
         isOpen={isDatePickerOpen}
         initialDate={dayDate}
         onClose={handleCloseDatePicker}
@@ -796,7 +833,7 @@ function App() {
       />
 
       <AddTaskModal
-        key={isAddTaskModalOpen && addTaskDate ? addTaskDate.toISOString() : 'closed'}
+        key={isAddTaskModalOpen && addTaskDate ? `add-task:${addTaskDate.toISOString()}` : 'add-task:closed'}
         isOpen={isAddTaskModalOpen && !!addTaskDate}
         date={addTaskDate ?? today}
         onClose={handleCloseAddTaskModal}
