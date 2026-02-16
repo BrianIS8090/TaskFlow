@@ -680,7 +680,7 @@ function App() {
                           </div>
                           <button
                             onClick={() => handleOpenAddTaskModal(day)}
-                            className="w-6 h-6 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-white/50 hover:bg-blue-500 hover:text-white transition-all opacity-0 group-hover:opacity-100"
+                            className="w-6 h-6 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-white/50 hover:bg-blue-500 hover:text-white transition-all"
                             aria-label="Добавить задачу"
                           >
                             <Plus className="w-3 h-3" />
