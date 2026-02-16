@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { format, startOfWeek, endOfWeek } from 'date-fns';
+import { format, startOfWeek, endOfWeek, addDays } from 'date-fns';
 import type { Task } from '../types';
 import { mockTaskRepository } from '../services/mockTasks';
 import { createFirebaseRepository } from '../services/firebaseTasks';
@@ -10,7 +10,7 @@ type MonthKey = {
   month: number;
 };
 
-export function useWeekTasks(anchorDate: Date) {
+export function useWeekTasks(anchorDate: Date, weeks: number = 1) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loadedRange, setLoadedRange] = useState('');
   const { user } = useAuth();
@@ -27,8 +27,8 @@ export function useWeekTasks(anchorDate: Date) {
     [anchorDate]
   );
   const weekEnd = useMemo(
-    () => endOfWeek(anchorDate, { weekStartsOn: 1 }),
-    [anchorDate]
+    () => endOfWeek(addDays(weekStart, (weeks - 1) * 7), { weekStartsOn: 1 }),
+    [weekStart, weeks]
   );
 
   const rangeStart = format(weekStart, 'yyyy-MM-dd');

@@ -21,6 +21,7 @@ export interface TaskItemProps {
   onUpdateCheckpoint?: (id: string | number, text: string) => void;
   className?: string;
   onInteractionChange?: (isInteracting: boolean) => void;
+  compact?: boolean;
 }
 
 export const TaskItem: React.FC<TaskItemProps> = ({
@@ -38,7 +39,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   onDeleteCheckpoint,
   onUpdateCheckpoint,
   className,
-  onInteractionChange
+  onInteractionChange,
+  compact
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(task.title);
@@ -103,18 +105,18 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   };
 
   return (
-    <div className={`glass rounded-2xl overflow-hidden transition-all hover:bg-slate-200/50 dark:hover:bg-white/[0.07] ${className ?? ''}`}>
-      <div className="p-4 flex items-start gap-4">
+    <div className={`glass ${compact ? 'rounded-lg' : 'rounded-2xl'} overflow-hidden transition-all hover:bg-slate-200/50 dark:hover:bg-white/[0.07] ${className ?? ''}`}>
+      <div className={`${compact ? 'p-2' : 'p-4'} flex items-start ${compact ? 'gap-2' : 'gap-4'}`}>
         <button
           onClick={handleToggleAttempt}
-          className={`mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors flex-shrink-0
-            ${task.completed 
-              ? 'bg-green-500/20 border-green-500' 
-              : hasIncompleteCheckpoints 
-                ? 'border-slate-200 dark:border-white/10 cursor-not-allowed opacity-50' 
+          className={`mt-0.5 ${compact ? 'w-4 h-4' : 'w-6 h-6'} rounded-lg border-2 flex items-center justify-center transition-colors flex-shrink-0
+            ${task.completed
+              ? 'bg-green-500/20 border-green-500'
+              : hasIncompleteCheckpoints
+                ? 'border-slate-200 dark:border-white/10 cursor-not-allowed opacity-50'
                 : 'border-slate-300 dark:border-white/30 hover:border-blue-500'}`}
         >
-          {task.completed && <Check className="w-4 h-4 text-green-500" />}
+          {task.completed && <Check className={`${compact ? 'w-3 h-3' : 'w-4 h-4'} text-green-500`} />}
         </button>
 
         <div className="flex-1 min-w-0">
@@ -155,17 +157,25 @@ export const TaskItem: React.FC<TaskItemProps> = ({
               onClick={onToggleExpand}
               className="text-left w-full"
             >
-              <div className={`font-medium ${task.completed ? 'text-slate-400 dark:text-white/40 line-through' : 'text-slate-900 dark:text-white'}`}>
+              <div className={`${compact ? 'text-sm' : ''} font-medium ${task.completed ? 'text-slate-400 dark:text-white/40 line-through' : 'text-slate-900 dark:text-white'}`}>
                 {task.title}
               </div>
-              <div className="text-slate-500 dark:text-white/50 text-sm mt-1 flex items-center gap-2">
-                {task.checkpoints.length > 0 ? (
-                  <span>{task.checkpoints.filter(c => c.done).length} / {task.checkpoints.length} чекпоинтов</span>
-                ) : (
-                  <span className="text-slate-400 dark:text-white/30">Нажмите чтобы добавить чекпоинты</span>
-                )}
-                <ChevronRight className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-              </div>
+              {compact ? (
+                task.checkpoints.length > 0 && (
+                  <div className="text-xs text-slate-400 dark:text-white/40 mt-0.5">
+                    {task.checkpoints.filter(c => c.done).length}/{task.checkpoints.length}
+                  </div>
+                )
+              ) : (
+                <div className="text-slate-500 dark:text-white/50 text-sm mt-1 flex items-center gap-2">
+                  {task.checkpoints.length > 0 ? (
+                    <span>{task.checkpoints.filter(c => c.done).length} / {task.checkpoints.length} чекпоинтов</span>
+                  ) : (
+                    <span className="text-slate-400 dark:text-white/30">Нажмите чтобы добавить чекпоинты</span>
+                  )}
+                  <ChevronRight className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                </div>
+              )}
             </button>
           )}
 
@@ -182,7 +192,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         </div>
 
         {/* Desktop кнопки */}
-        <div className="hidden lg:flex gap-2">
+        <div className={`hidden ${compact ? '' : 'lg:flex'} gap-2`}>
           {!task.completed && (
             <>
               <button
@@ -224,8 +234,8 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           </button>
         </div>
 
-        {/* Mobile бургер-меню */}
-        <div className="lg:hidden">
+        {/* Бургер-меню (всегда в compact, только на мобильных без compact) */}
+        <div className={compact ? '' : 'lg:hidden'}>
           <button
             ref={buttonRef}
             onClick={handleOpenMenu}
