@@ -514,22 +514,12 @@ function App() {
             <button
               onClick={() => handleViewModeChange('week-list')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                viewMode === 'week-list'
+                viewMode === 'week-list' || viewMode === 'week-grid'
                   ? 'bg-slate-900 text-white dark:bg-white/20 dark:text-white'
                   : 'text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Неделя
-            </button>
-            <button
-              onClick={() => handleViewModeChange('week-grid')}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                viewMode === 'week-grid'
-                  ? 'bg-slate-900 text-white dark:bg-white/20 dark:text-white'
-                  : 'text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              Таблица
             </button>
           </div>
         </div>
