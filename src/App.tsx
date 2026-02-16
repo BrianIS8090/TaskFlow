@@ -616,13 +616,13 @@ function App() {
           >
             <div className="space-y-6">
               {weekTasksLoading && weekTasks.length === 0 ? (
-                <div className="space-y-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
                   {Array.from({ length: 7 }).map((_, index) => (
-                    <div key={index} className="glass rounded-2xl h-32 animate-pulse" />
+                    <div key={index} className="glass rounded-2xl h-40 animate-pulse" />
                   ))}
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
                   {weekDays.map((day) => {
                     const dayKey = format(day, 'yyyy-MM-dd');
                     const dayTasks = tasksByDate[dayKey] || [];
@@ -630,31 +630,42 @@ function App() {
                     const dayIncompleteIds = dayIncomplete.map(task => String(task.id));
                     const dayCompleted = dayTasks.filter(task => task.completed);
                     const hasTasks = dayIncomplete.length > 0 || dayCompleted.length > 0;
+                    const isTodayDate = isToday(day);
 
                     return (
                       <DroppableContainer
                         key={dayKey}
                         id={dayKey}
-                        className="glass rounded-2xl p-3 flex flex-col gap-3 min-h-[140px]"
+                        className={`glass rounded-xl p-2 flex flex-col gap-2 min-h-[200px] group relative ${
+                          isTodayDate ? 'ring-2 ring-blue-500/50' : ''
+                        }`}
                       >
-                        <div className="flex items-center justify-between px-1">
+                        <div className="flex items-center justify-between px-1 mb-1">
                           <div>
-                            <div className="text-sm font-semibold text-slate-700 dark:text-white/80 capitalize">
-                              {format(day, 'EEEE', { locale: ru })}
+                            <div className={`text-xs font-semibold capitalize ${
+                              isTodayDate 
+                                ? 'text-blue-600 dark:text-blue-400' 
+                                : 'text-slate-600 dark:text-white/70'
+                            }`}>
+                              {format(day, 'EEE', { locale: ru })}
                             </div>
-                            <div className="text-xs text-slate-400 dark:text-white/40">
-                              {format(day, 'd MMM', { locale: ru })}
+                            <div className={`text-lg font-bold ${
+                              isTodayDate 
+                                ? 'text-blue-600 dark:text-blue-400' 
+                                : 'text-slate-700 dark:text-white/80'
+                            }`}>
+                              {format(day, 'd')}
                             </div>
                           </div>
                           <button
                             onClick={() => handleOpenAddTaskModal(day)}
-                            className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-white/60 hover:bg-slate-300 dark:hover:bg-white/15 hover:text-slate-900 dark:hover:text-white transition-all"
+                            className="w-6 h-6 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-white/50 hover:bg-blue-500 hover:text-white transition-all opacity-0 group-hover:opacity-100"
                             aria-label="Добавить задачу"
                           >
-                            <Plus className="w-4 h-4" />
+                            <Plus className="w-3 h-3" />
                           </button>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-1 flex-1 overflow-y-auto">
                           <SortableContext
                             key={`${dayKey}:${dayIncompleteIds.join('|')}`}
                             items={dayIncompleteIds}
@@ -678,19 +689,17 @@ function App() {
                                 onToggleCheckpoint={(cpId) => toggleCheckpoint(task, cpId)}
                                 onDeleteCheckpoint={(cpId) => deleteCheckpoint(task, cpId)}
                                 onUpdateCheckpoint={(cpId, text) => updateCheckpoint(task, cpId, text)}
+                                compact
                               />
                             ))}
                           </SortableContext>
                           {dayCompleted.length > 0 && (
-                            <div className="space-y-2">
-                              <div className="text-xs uppercase tracking-wider text-slate-400 dark:text-white/40 px-2">
-                                Выполнено
-                              </div>
-                              {dayCompleted.map(task => (
-                                <div key={task.id} className="opacity-60 hover:opacity-100 transition-opacity">
+                            <div className="space-y-1">
+                              {dayCompleted.slice(0, 2).map(task => (
+                                <div key={task.id} className="opacity-50 hover:opacity-80 transition-opacity">
                                   <TaskItem
                                     task={task}
-                                    isExpanded={expandedTaskId === task.id}
+                                    isExpanded={false}
                                     onToggleExpand={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
                                     onToggleComplete={() => toggleTask(task)}
                                     onDelete={() => deleteTask(String(task.id))}
@@ -702,14 +711,20 @@ function App() {
                                     onToggleCheckpoint={(cpId) => toggleCheckpoint(task, cpId)}
                                     onDeleteCheckpoint={(cpId) => deleteCheckpoint(task, cpId)}
                                     onUpdateCheckpoint={(cpId, text) => updateCheckpoint(task, cpId, text)}
+                                    compact
                                   />
                                 </div>
                               ))}
+                              {dayCompleted.length > 2 && (
+                                <div className="text-xs text-slate-400 dark:text-white/40 text-center">
+                                  +{dayCompleted.length - 2} ещё
+                                </div>
+                              )}
                             </div>
                           )}
                           {!hasTasks && (
-                            <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/10 p-3 text-center text-xs text-slate-400 dark:text-white/40">
-                              Нет задач
+                            <div className="rounded-lg border border-dashed border-slate-200 dark:border-white/10 p-2 text-center text-xs text-slate-400 dark:text-white/30">
+                              Пусто
                             </div>
                           )}
                         </div>
