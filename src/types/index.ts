@@ -1,3 +1,6 @@
+// Спецзначение для задач без привязки к дате (бэклог)
+export const BACKLOG_DATE = 'backlog';
+
 export interface Checkpoint {
   id: string | number;
   text: string;
@@ -36,4 +39,6 @@ export interface TaskRepository {
    * Возвращает функцию для отписки.
    */
   onTasksForMonthChange(year: number, month: number, callback: (tasks: Task[]) => void): () => void;
+  // Подписка на задачи из бэклога (date === 'backlog')
+  onBacklogTasksChange(callback: (tasks: Task[]) => void): () => void;
 }

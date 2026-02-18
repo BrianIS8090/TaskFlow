@@ -17,8 +17,10 @@ import { SortableTaskItem } from './components/Tasks/SortableTaskItem';
 import { LoginForm } from './components/Auth/LoginForm';
 import { useTasks } from './hooks/useTasks';
 import { useWeekTasks } from './hooks/useWeekTasks';
+import { useBacklogTasks } from './hooks/useBacklogTasks';
 import { useAuth } from './context/useAuth';
-import { Plus, Calendar as CalendarIcon, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BACKLOG_DATE } from './types';
+import { Plus, Calendar as CalendarIcon, Loader2, ChevronLeft, ChevronRight, Inbox, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { SearchModal } from './components/Search/SearchModal';
 import { DatePickerModal } from './components/UI/DatePickerModal';
 import { AddTaskModal } from './components/UI/AddTaskModal';
@@ -44,6 +46,9 @@ function App() {
   const [weekDragSourceContainer, setWeekDragSourceContainer] = useState<string | null>(null);
   const [isWeekOrderPersisting, setIsWeekOrderPersisting] = useState(false);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [isBacklogOpen, setIsBacklogOpen] = useState(true);
+  const [newBacklogText, setNewBacklogText] = useState('');
+  const [backlogTaskOrder, setBacklogTaskOrder] = useState<Task[]>([]);
 
   const dateKey = format(dayDate, 'yyyy-MM-dd');
   const today = useMemo(() => startOfDay(new Date()), []);
@@ -75,6 +80,19 @@ function App() {
   } = useTasks(dateKey);
   const numWeeks = isWeekGridView ? 4 : 1;
   const { tasks: weekTasks, loading: weekTasksLoading } = useWeekTasks(weekAnchorDate, numWeeks);
+  const {
+    tasks: backlogTasks,
+    addBacklogTask,
+    moveToBacklog,
+    toggleTask: toggleBacklogTask,
+    deleteTask: deleteBacklogTask,
+    updateTaskTitle: updateBacklogTaskTitle,
+    addCheckpoint: addBacklogCheckpoint,
+    toggleCheckpoint: toggleBacklogCheckpoint,
+    deleteCheckpoint: deleteBacklogCheckpoint,
+    updateCheckpoint: updateBacklogCheckpoint,
+    reorderTasks: reorderBacklogTasks
+  } = useBacklogTasks();
 
   // 1. Состояние загрузки (проверка авторизации)
   if (authLoading) {
@@ -103,6 +121,8 @@ function App() {
   const completedTasks = useMemo(() => tasks.filter(t => t.completed), [tasks]);
   const weekIncompleteTasks = useMemo(() => weekTasks.filter(t => !t.completed), [weekTasks]);
   const dayTaskIds = useMemo(() => dayTaskOrder.map(task => String(task.id)), [dayTaskOrder]);
+  const backlogIncompleteTasks = useMemo(() => backlogTasks.filter(t => !t.completed), [backlogTasks]);
+  const backlogTaskIds = useMemo(() => backlogTaskOrder.map(task => String(task.id)), [backlogTaskOrder]);
 
   useEffect(() => {
     if (activeTask) {
@@ -110,6 +130,13 @@ function App() {
     }
     setDayTaskOrder(incompleteTasks);
   }, [activeTask, incompleteTasks]);
+
+  useEffect(() => {
+    if (activeTask) {
+      return;
+    }
+    setBacklogTaskOrder(backlogIncompleteTasks);
+  }, [activeTask, backlogIncompleteTasks]);
 
   useEffect(() => {
     if (!activeTask) {
@@ -195,13 +222,23 @@ function App() {
     if (activeTask || isWeekOrderPersisting) {
       return;
     }
-    setWeekTaskOrder(weekIncompleteByDate);
-  }, [activeTask, isWeekOrderPersisting, weekIncompleteByDate]);
+    const next = { ...weekIncompleteByDate };
+    // Сохраняем бэклог-контейнер в общем weekTaskOrder для DnD
+    if (isWeekGridView) {
+      next[BACKLOG_DATE] = backlogIncompleteTasks;
+    }
+    setWeekTaskOrder(next);
+  }, [activeTask, isWeekOrderPersisting, weekIncompleteByDate, isWeekGridView, backlogIncompleteTasks]);
 
   const taskLookup = useMemo(() => {
     const currentTasks = isWeekView ? weekTasks : tasks;
-    return new Map(currentTasks.map(task => [String(task.id), task]));
-  }, [isWeekView, tasks, weekTasks]);
+    const map = new Map(currentTasks.map(task => [String(task.id), task]));
+    // Добавляем бэклог-задачи в lookup для DnD
+    if (isWeekGridView) {
+      backlogTasks.forEach(task => map.set(String(task.id), task));
+    }
+    return map;
+  }, [isWeekView, isWeekGridView, tasks, weekTasks, backlogTasks]);
 
   const handlePrevDate = () => {
     if (isWeekView) {
@@ -253,6 +290,14 @@ function App() {
   const handleSelectDateFromSearch = (date: Date) => {
     setDayDate(date);
     setViewMode('day');
+  };
+
+  // Выбирает правильную функцию reorder в зависимости от контейнера (бэклог или обычный день)
+  const reorderForContainer = (tasks: Task[], container: string) => {
+    if (container === BACKLOG_DATE) {
+      return reorderBacklogTasks(tasks);
+    }
+    return reorderTasks(tasks, container);
   };
 
   const findWeekContainer = (id: string, containers: Record<string, Task[]>) => {
@@ -387,8 +432,8 @@ function App() {
         }));
 
         await Promise.all([
-          reorderTasks(nextSource, sourceContainer),
-          reorderTasks(nextTarget, overContainer)
+          reorderForContainer(nextSource, sourceContainer),
+          reorderForContainer(nextTarget, overContainer)
         ]);
         return;
       }
@@ -407,7 +452,7 @@ function App() {
 
         const reordered = arrayMove(containerTasks, oldIndex, newIndex);
         setWeekTaskOrder(prev => ({ ...prev, [activeContainer]: reordered }));
-        await reorderTasks(reordered, activeContainer);
+        await reorderForContainer(reordered, activeContainer);
         return;
       }
     } finally {
@@ -537,7 +582,16 @@ function App() {
         </div>
 
         {/* Заголовок даты */}
-        <div className="hidden lg:block mb-8 animate-fade-in">
+        <div className="hidden lg:block mb-8 animate-fade-in relative">
+          {isWeekGridView && (
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="absolute left-0 top-1 w-10 h-10 rounded-xl bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300 dark:hover:bg-white/15 transition-all"
+              title="Открыть календарь"
+            >
+              <CalendarIcon className="w-5 h-5" />
+            </button>
+          )}
           <div className="flex items-center justify-center gap-10 mb-1">
             <button
               onClick={handlePrevDate}
@@ -641,127 +695,229 @@ function App() {
               {weekTasksLoading && weekTasks.length === 0 ? (
                 <div className="space-y-4">
                   {Array.from({ length: numWeeks }, (_, row) => (
-                    <div key={row} className="grid grid-cols-7 gap-2">
+                    <div key={row} className={`grid gap-2 ${isBacklogOpen ? 'grid-cols-8' : 'grid-cols-[repeat(7,1fr)_40px]'}`}>
                       {Array.from({ length: 7 }).map((_, index) => (
                         <div key={index} className="glass rounded-xl h-40 animate-pulse" />
                       ))}
+                      {row === 0 && (
+                        <div className="glass rounded-xl h-40 animate-pulse" style={{ gridRow: `1 / span ${numWeeks}` }} />
+                      )}
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {Array.from({ length: numWeeks }, (_, weekIndex) => (
-                    <div key={weekIndex} className="grid grid-cols-7 gap-2">
-                      {weekDays.slice(weekIndex * 7, (weekIndex + 1) * 7).map((day) => {
-                        const dayKey = format(day, 'yyyy-MM-dd');
-                        const dayTasks = tasksByDate[dayKey] || [];
-                        const dayIncomplete = weekTaskOrder[dayKey] || [];
-                        const dayIncompleteIds = dayIncomplete.map(task => String(task.id));
-                        const dayCompleted = dayTasks.filter(task => task.completed);
-                        const hasTasks = dayIncomplete.length > 0 || dayCompleted.length > 0;
-                        const isTodayDate = isToday(day);
+                <div
+                  className={`grid gap-2 ${isBacklogOpen ? 'grid-cols-8' : 'grid-cols-[repeat(7,1fr)_40px]'}`}
+                  style={{ gridTemplateRows: `repeat(${numWeeks}, auto)` }}
+                >
+                  {weekDays.map((day, index) => {
+                    const dayKey = format(day, 'yyyy-MM-dd');
+                    const dayTasks = tasksByDate[dayKey] || [];
+                    const dayIncomplete = weekTaskOrder[dayKey] || [];
+                    const dayIncompleteIds = dayIncomplete.map(task => String(task.id));
+                    const dayCompleted = dayTasks.filter(task => task.completed);
+                    const hasTasks = dayIncomplete.length > 0 || dayCompleted.length > 0;
+                    const isTodayDate = isToday(day);
+                    const row = Math.floor(index / 7) + 1;
+                    const col = (index % 7) + 1;
 
-                        return (
-                          <DroppableContainer
-                            key={dayKey}
-                            id={dayKey}
-                            className={`glass rounded-xl p-2 flex flex-col gap-2 min-h-[200px] group relative ${
-                              isTodayDate ? 'ring-2 ring-blue-500/50' : ''
-                            }`}
-                          >
-                            <div className="flex items-center justify-between px-1 mb-1">
-                              <div>
-                                <div className={`text-xs font-semibold capitalize ${
-                                  isTodayDate
-                                    ? 'text-blue-600 dark:text-blue-400'
-                                    : 'text-slate-600 dark:text-white/70'
-                                }`}>
-                                  {format(day, 'EEE', { locale: ru })}
-                                </div>
-                                <div className={`text-lg font-bold ${
-                                  isTodayDate
-                                    ? 'text-blue-600 dark:text-blue-400'
-                                    : 'text-slate-700 dark:text-white/80'
-                                }`}>
-                                  {format(day, 'd')}
-                                </div>
+                    return (
+                      <div key={dayKey} style={{ gridRow: row, gridColumn: col }}>
+                        <DroppableContainer
+                          id={dayKey}
+                          className={`glass rounded-xl p-2 flex flex-col gap-2 min-h-[200px] group relative h-full ${
+                            isTodayDate ? 'ring-2 ring-blue-500/50' : ''
+                          }`}
+                        >
+                          <div className="flex items-center justify-between px-1 mb-1">
+                            <div>
+                              <div className={`text-xs font-semibold capitalize ${
+                                isTodayDate
+                                  ? 'text-blue-600 dark:text-blue-400'
+                                  : 'text-slate-600 dark:text-white/70'
+                              }`}>
+                                {format(day, 'EEE', { locale: ru })}
                               </div>
-                              <button
-                                onClick={() => handleOpenAddTaskModal(day)}
-                                className="w-6 h-6 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-white/50 hover:bg-blue-500 hover:text-white transition-all"
-                                aria-label="Добавить задачу"
-                              >
-                                <Plus className="w-3 h-3" />
-                              </button>
+                              <div className={`text-lg font-bold ${
+                                isTodayDate
+                                  ? 'text-blue-600 dark:text-blue-400'
+                                  : 'text-slate-700 dark:text-white/80'
+                              }`}>
+                                {format(day, 'd')}
+                              </div>
                             </div>
-                            <div className="space-y-1 flex-1 overflow-y-auto">
-                              <SortableContext
-                                key={`${dayKey}:grid:${dayIncompleteIds.join('|')}`}
-                                items={dayIncompleteIds}
-                                strategy={verticalListSortingStrategy}
-                              >
-                                {dayIncomplete.map(task => (
-                                  <SortableTaskItem
-                                    key={task.id}
-                                    id={String(task.id)}
-                                    containerId={dayKey}
-                                    task={task}
-                                    isExpanded={expandedTaskId === task.id}
-                                    onToggleExpand={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
-                                    onToggleComplete={() => toggleTask(task)}
-                                    onDelete={() => deleteTask(String(task.id))}
-                                    onMoveToTomorrow={() => moveTaskToTomorrow(task)}
-                                    onMoveToYesterday={() => moveTaskToYesterday(task)}
-                                    onMoveToDate={() => handleOpenDatePicker(task)}
-                                    onUpdateTitle={(title) => updateTaskTitle(String(task.id), title)}
-                                    onAddCheckpoint={(text) => addCheckpoint(task, text)}
-                                    onToggleCheckpoint={(cpId) => toggleCheckpoint(task, cpId)}
-                                    onDeleteCheckpoint={(cpId) => deleteCheckpoint(task, cpId)}
-                                    onUpdateCheckpoint={(cpId, text) => updateCheckpoint(task, cpId, text)}
-                                    compact
-                                  />
+                            <button
+                              onClick={() => handleOpenAddTaskModal(day)}
+                              className="w-6 h-6 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-white/50 hover:bg-blue-500 hover:text-white transition-all"
+                              aria-label="Добавить задачу"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
+                          <div className="space-y-1 flex-1 overflow-y-auto">
+                            <SortableContext
+                              key={`${dayKey}:grid:${dayIncompleteIds.join('|')}`}
+                              items={dayIncompleteIds}
+                              strategy={verticalListSortingStrategy}
+                            >
+                              {dayIncomplete.map(task => (
+                                <SortableTaskItem
+                                  key={task.id}
+                                  id={String(task.id)}
+                                  containerId={dayKey}
+                                  task={task}
+                                  isExpanded={expandedTaskId === task.id}
+                                  onToggleExpand={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
+                                  onToggleComplete={() => toggleTask(task)}
+                                  onDelete={() => deleteTask(String(task.id))}
+                                  onMoveToTomorrow={() => moveTaskToTomorrow(task)}
+                                  onMoveToYesterday={() => moveTaskToYesterday(task)}
+                                  onMoveToDate={() => handleOpenDatePicker(task)}
+                                  onUpdateTitle={(title) => updateTaskTitle(String(task.id), title)}
+                                  onAddCheckpoint={(text) => addCheckpoint(task, text)}
+                                  onToggleCheckpoint={(cpId) => toggleCheckpoint(task, cpId)}
+                                  onDeleteCheckpoint={(cpId) => deleteCheckpoint(task, cpId)}
+                                  onUpdateCheckpoint={(cpId, text) => updateCheckpoint(task, cpId, text)}
+                                  onMoveToBacklog={() => moveToBacklog(task)}
+                                  compact
+                                />
+                              ))}
+                            </SortableContext>
+                            {dayCompleted.length > 0 && (
+                              <div className="space-y-1">
+                                {dayCompleted.slice(0, 2).map(task => (
+                                  <div key={task.id} className="opacity-50 hover:opacity-80 transition-opacity">
+                                    <TaskItem
+                                      task={task}
+                                      isExpanded={false}
+                                      onToggleExpand={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
+                                      onToggleComplete={() => toggleTask(task)}
+                                      onDelete={() => deleteTask(String(task.id))}
+                                      onMoveToTomorrow={() => moveTaskToTomorrow(task)}
+                                      onMoveToYesterday={() => moveTaskToYesterday(task)}
+                                      onMoveToDate={() => handleOpenDatePicker(task)}
+                                      onUpdateTitle={(title) => updateTaskTitle(String(task.id), title)}
+                                      onAddCheckpoint={(text) => addCheckpoint(task, text)}
+                                      onToggleCheckpoint={(cpId) => toggleCheckpoint(task, cpId)}
+                                      onDeleteCheckpoint={(cpId) => deleteCheckpoint(task, cpId)}
+                                      onUpdateCheckpoint={(cpId, text) => updateCheckpoint(task, cpId, text)}
+                                      onMoveToBacklog={() => moveToBacklog(task)}
+                                      compact
+                                    />
+                                  </div>
                                 ))}
-                              </SortableContext>
-                              {dayCompleted.length > 0 && (
-                                <div className="space-y-1">
-                                  {dayCompleted.slice(0, 2).map(task => (
-                                    <div key={task.id} className="opacity-50 hover:opacity-80 transition-opacity">
-                                      <TaskItem
-                                        task={task}
-                                        isExpanded={false}
-                                        onToggleExpand={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
-                                        onToggleComplete={() => toggleTask(task)}
-                                        onDelete={() => deleteTask(String(task.id))}
-                                        onMoveToTomorrow={() => moveTaskToTomorrow(task)}
-                                        onMoveToYesterday={() => moveTaskToYesterday(task)}
-                                        onMoveToDate={() => handleOpenDatePicker(task)}
-                                        onUpdateTitle={(title) => updateTaskTitle(String(task.id), title)}
-                                        onAddCheckpoint={(text) => addCheckpoint(task, text)}
-                                        onToggleCheckpoint={(cpId) => toggleCheckpoint(task, cpId)}
-                                        onDeleteCheckpoint={(cpId) => deleteCheckpoint(task, cpId)}
-                                        onUpdateCheckpoint={(cpId, text) => updateCheckpoint(task, cpId, text)}
-                                        compact
-                                      />
-                                    </div>
-                                  ))}
-                                  {dayCompleted.length > 2 && (
-                                    <div className="text-xs text-slate-400 dark:text-white/40 text-center">
-                                      +{dayCompleted.length - 2} ещё
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                              {!hasTasks && (
-                                <div className="rounded-lg border border-dashed border-slate-200 dark:border-white/10 p-2 text-center text-xs text-slate-400 dark:text-white/30">
-                                  Пусто
-                                </div>
-                              )}
+                                {dayCompleted.length > 2 && (
+                                  <div className="text-xs text-slate-400 dark:text-white/40 text-center">
+                                    +{dayCompleted.length - 2} ещё
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {!hasTasks && (
+                              <div className="rounded-lg border border-dashed border-slate-200 dark:border-white/10 p-2 text-center text-xs text-slate-400 dark:text-white/30">
+                                Пусто
+                              </div>
+                            )}
+                          </div>
+                        </DroppableContainer>
+                      </div>
+                    );
+                  })}
+
+                  {/* Панель бэклога — 8-я колонка, занимает все строки */}
+                  <div style={{ gridRow: `1 / span ${numWeeks}`, gridColumn: 8 }}>
+                    {isBacklogOpen ? (
+                      <div className="glass rounded-xl p-2 flex flex-col gap-2 h-full min-h-[200px]">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            <Inbox className="w-4 h-4 text-indigo-500" />
+                            <span className="text-sm font-semibold text-slate-700 dark:text-white/80">Бэклог</span>
+                          </div>
+                          <button
+                            onClick={() => setIsBacklogOpen(false)}
+                            className="w-6 h-6 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-white/50 hover:bg-slate-300 dark:hover:bg-white/15 transition-all"
+                            title="Свернуть бэклог"
+                          >
+                            <PanelRightClose className="w-3 h-3" />
+                          </button>
+                        </div>
+                        <div className="flex gap-1 mb-1">
+                          <input
+                            type="text"
+                            value={newBacklogText}
+                            onChange={(e) => setNewBacklogText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && newBacklogText.trim()) {
+                                addBacklogTask(newBacklogText.trim());
+                                setNewBacklogText('');
+                              }
+                            }}
+                            placeholder="Новая задача..."
+                            className="flex-1 min-w-0 bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/40 outline-none text-xs px-2 py-1.5 rounded-lg"
+                          />
+                          <button
+                            onClick={() => {
+                              if (newBacklogText.trim()) {
+                                addBacklogTask(newBacklogText.trim());
+                                setNewBacklogText('');
+                              }
+                            }}
+                            className="w-7 h-7 bg-indigo-500 rounded-lg flex items-center justify-center text-white hover:bg-indigo-600 transition-colors flex-shrink-0"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+                        <DroppableContainer
+                          id={BACKLOG_DATE}
+                          className="space-y-1 flex-1 overflow-y-auto"
+                        >
+                          <SortableContext
+                            key={`backlog:${backlogTaskIds.join('|')}`}
+                            items={backlogTaskIds}
+                            strategy={verticalListSortingStrategy}
+                          >
+                            {backlogTaskOrder.map(task => (
+                              <SortableTaskItem
+                                key={task.id}
+                                id={String(task.id)}
+                                containerId={BACKLOG_DATE}
+                                task={task}
+                                isExpanded={expandedTaskId === task.id}
+                                onToggleExpand={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
+                                onToggleComplete={() => toggleBacklogTask(task)}
+                                onDelete={() => deleteBacklogTask(String(task.id))}
+                                onMoveToTomorrow={() => {}}
+                                onMoveToYesterday={() => {}}
+                                onMoveToDate={() => handleOpenDatePicker(task)}
+                                onUpdateTitle={(title) => updateBacklogTaskTitle(String(task.id), title)}
+                                onAddCheckpoint={(text) => addBacklogCheckpoint(task, text)}
+                                onToggleCheckpoint={(cpId) => toggleBacklogCheckpoint(task, cpId)}
+                                onDeleteCheckpoint={(cpId) => deleteBacklogCheckpoint(task, cpId)}
+                                onUpdateCheckpoint={(cpId, text) => updateBacklogCheckpoint(task, cpId, text)}
+                                compact
+                              />
+                            ))}
+                          </SortableContext>
+                          {backlogTaskOrder.length === 0 && (
+                            <div className="rounded-lg border border-dashed border-slate-200 dark:border-white/10 p-2 text-center text-xs text-slate-400 dark:text-white/30">
+                              Перетащите сюда
                             </div>
-                          </DroppableContainer>
-                        );
-                      })}
-                    </div>
-                  ))}
+                          )}
+                        </DroppableContainer>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setIsBacklogOpen(true)}
+                        className="glass rounded-xl w-10 h-full min-h-[200px] flex flex-col items-center justify-start pt-3 gap-2 hover:bg-slate-200/50 dark:hover:bg-white/[0.07] transition-all"
+                        title="Открыть бэклог"
+                      >
+                        <PanelRightOpen className="w-4 h-4 text-indigo-500" />
+                        <span className="text-xs text-slate-500 dark:text-white/50" style={{ writingMode: 'vertical-lr' }}>
+                          Бэклог
+                        </span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
 

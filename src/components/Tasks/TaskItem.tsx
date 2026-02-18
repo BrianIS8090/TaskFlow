@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, ChevronRight, Pencil, ArrowRight, ArrowLeft, Trash2, X, MoreVertical, Calendar } from 'lucide-react';
+import { Check, ChevronRight, Pencil, ArrowRight, ArrowLeft, Trash2, X, MoreVertical, Calendar, Inbox } from 'lucide-react';
 import type { Task } from '../../types';
 import { CheckpointsList } from './CheckpointsList';
 import { ConfirmDialog } from '../UI/ConfirmDialog';
@@ -19,6 +19,7 @@ export interface TaskItemProps {
   onToggleCheckpoint: (id: string | number) => void;
   onDeleteCheckpoint: (id: string | number) => void;
   onUpdateCheckpoint?: (id: string | number, text: string) => void;
+  onMoveToBacklog?: () => void;
   className?: string;
   onInteractionChange?: (isInteracting: boolean) => void;
   compact?: boolean;
@@ -38,6 +39,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   onToggleCheckpoint,
   onDeleteCheckpoint,
   onUpdateCheckpoint,
+  onMoveToBacklog,
   className,
   onInteractionChange,
   compact
@@ -293,6 +295,18 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                     <ArrowRight className="w-4 h-4" />
                     Перенести на день вперёд
                   </button>
+                  {onMoveToBacklog && (
+                    <button
+                      onClick={() => {
+                        setShowMobileMenu(false);
+                        onMoveToBacklog();
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-sm text-slate-600 dark:text-white/70 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-indigo-500 flex items-center gap-3 transition-colors"
+                    >
+                      <Inbox className="w-4 h-4" />
+                      В бэклог
+                    </button>
+                  )}
                 </>
               )}
               <button
