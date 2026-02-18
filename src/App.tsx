@@ -501,7 +501,7 @@ function App() {
             {user?.displayName ? user.displayName[0].toUpperCase() : 'U'}
           </div>
         </div>
-        <div className="lg:hidden flex justify-center mb-6">
+        <div className={`${isWeekGridView ? 'flex' : 'lg:hidden flex'} justify-center mb-6`}>
           <div className="flex items-center gap-1 rounded-xl bg-slate-200/70 dark:bg-white/10 p-1">
             <button
               onClick={() => handleViewModeChange('day')}
@@ -516,18 +516,28 @@ function App() {
             <button
               onClick={() => handleViewModeChange('week')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                viewMode === 'week' || viewMode === 'week-grid'
+                viewMode === 'week'
                   ? 'bg-slate-900 text-white dark:bg-white/20 dark:text-white'
                   : 'text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Неделя
             </button>
+            <button
+              onClick={() => handleViewModeChange('week-grid')}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                viewMode === 'week-grid'
+                  ? 'bg-slate-900 text-white dark:bg-white/20 dark:text-white'
+                  : 'text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              Таблица
+            </button>
           </div>
         </div>
 
-        {/* Заголовок даты */}
-        <div className="hidden lg:block mb-8 animate-fade-in">
+        {/* Заголовок даты (скрыт в табличном режиме — навигация в мобильном хедере) */}
+        <div className={`hidden ${isWeekGridView ? '' : 'lg:block'} mb-8 animate-fade-in`}>
           <div className="flex items-center justify-center gap-10 mb-1">
             <button
               onClick={handlePrevDate}
