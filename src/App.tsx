@@ -36,7 +36,7 @@ function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [taskToMove, setTaskToMove] = useState<Task | null>(null);
-  const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
+  const [viewMode, setViewMode] = useState<'day' | 'week' | 'week-grid'>('day');
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [addTaskDate, setAddTaskDate] = useState<Date | null>(null);
   const [dayTaskOrder, setDayTaskOrder] = useState<Task[]>([]);
@@ -47,7 +47,8 @@ function App() {
 
   const dateKey = format(dayDate, 'yyyy-MM-dd');
   const today = useMemo(() => startOfDay(new Date()), []);
-  const isWeekView = viewMode === 'week';
+  const isWeekView = viewMode === 'week' || viewMode === 'week-grid';
+  const isWeekGridView = viewMode === 'week-grid';
   const activeDate = isWeekView ? today : dayDate;
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
@@ -72,7 +73,8 @@ function App() {
     loading: tasksLoading,
     reorderTasks
   } = useTasks(dateKey);
-  const { tasks: weekTasks, loading: weekTasksLoading } = useWeekTasks(weekAnchorDate);
+  const numWeeks = isWeekGridView ? 4 : 1;
+  const { tasks: weekTasks, loading: weekTasksLoading } = useWeekTasks(weekAnchorDate, numWeeks);
 
   // 1. Состояние загрузки (проверка авторизации)
   if (authLoading) {
@@ -153,16 +155,16 @@ function App() {
     [weekAnchorDate]
   );
   const weekEnd = useMemo(
-    () => endOfWeek(weekAnchorDate, { weekStartsOn: 1 }),
-    [weekAnchorDate]
+    () => endOfWeek(addDays(weekStart, (numWeeks - 1) * 7), { weekStartsOn: 1 }),
+    [weekStart, numWeeks]
   );
   const weekRangeLabel = useMemo(
     () => `${format(weekStart, 'd MMM', { locale: ru })} — ${format(weekEnd, 'd MMM', { locale: ru })}`,
     [weekStart, weekEnd]
   );
   const weekDays = useMemo(
-    () => Array.from({ length: 7 }, (_, index) => addDays(weekStart, index)),
-    [weekStart]
+    () => Array.from({ length: 7 * numWeeks }, (_, index) => addDays(weekStart, index)),
+    [weekStart, numWeeks]
   );
 
   const tasksLoadingState = isWeekView ? weekTasksLoading : tasksLoading;
@@ -241,9 +243,9 @@ function App() {
     handleCloseAddTaskModal();
   };
 
-  const handleViewModeChange = (nextMode: 'day' | 'week') => {
+  const handleViewModeChange = (nextMode: 'day' | 'week' | 'week-grid') => {
     setViewMode(nextMode);
-    if (nextMode === 'week') {
+    if (nextMode === 'week' || nextMode === 'week-grid') {
       setWeekAnchorDate(dayDate);
     }
   };
@@ -513,7 +515,7 @@ function App() {
             <button
               onClick={() => handleViewModeChange('week')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                viewMode === 'week'
+                viewMode === 'week' || viewMode === 'week-grid'
                   ? 'bg-slate-900 text-white dark:bg-white/20 dark:text-white'
                   : 'text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white'
               }`}
@@ -578,6 +580,16 @@ function App() {
               >
                 Неделя
               </button>
+              <button
+                onClick={() => handleViewModeChange('week-grid')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  viewMode === 'week-grid'
+                    ? 'bg-slate-900 text-white dark:bg-white/20 dark:text-white'
+                    : 'text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                Таблица
+              </button>
             </div>
           </div>
         </div>
@@ -605,7 +617,156 @@ function App() {
         )}
 
         {/* Список задач */}
-        {isWeekView ? (
+        {isWeekGridView ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleWeekDragStart}
+            onDragOver={handleWeekDragOver}
+            onDragEnd={handleWeekDragEnd}
+            onDragCancel={handleWeekDragCancel}
+          >
+            <div className="space-y-6">
+              {weekTasksLoading && weekTasks.length === 0 ? (
+                <div className="space-y-4">
+                  {Array.from({ length: numWeeks }, (_, row) => (
+                    <div key={row} className="grid grid-cols-7 gap-2">
+                      {Array.from({ length: 7 }).map((_, index) => (
+                        <div key={index} className="glass rounded-xl h-40 animate-pulse" />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {Array.from({ length: numWeeks }, (_, weekIndex) => (
+                    <div key={weekIndex} className="grid grid-cols-7 gap-2">
+                      {weekDays.slice(weekIndex * 7, (weekIndex + 1) * 7).map((day) => {
+                        const dayKey = format(day, 'yyyy-MM-dd');
+                        const dayTasks = tasksByDate[dayKey] || [];
+                        const dayIncomplete = weekTaskOrder[dayKey] || [];
+                        const dayIncompleteIds = dayIncomplete.map(task => String(task.id));
+                        const dayCompleted = dayTasks.filter(task => task.completed);
+                        const hasTasks = dayIncomplete.length > 0 || dayCompleted.length > 0;
+                        const isTodayDate = isToday(day);
+
+                        return (
+                          <DroppableContainer
+                            key={dayKey}
+                            id={dayKey}
+                            className={`glass rounded-xl p-2 flex flex-col gap-2 min-h-[200px] group relative ${
+                              isTodayDate ? 'ring-2 ring-blue-500/50' : ''
+                            }`}
+                          >
+                            <div className="flex items-center justify-between px-1 mb-1">
+                              <div>
+                                <div className={`text-xs font-semibold capitalize ${
+                                  isTodayDate
+                                    ? 'text-blue-600 dark:text-blue-400'
+                                    : 'text-slate-600 dark:text-white/70'
+                                }`}>
+                                  {format(day, 'EEE', { locale: ru })}
+                                </div>
+                                <div className={`text-lg font-bold ${
+                                  isTodayDate
+                                    ? 'text-blue-600 dark:text-blue-400'
+                                    : 'text-slate-700 dark:text-white/80'
+                                }`}>
+                                  {format(day, 'd')}
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => handleOpenAddTaskModal(day)}
+                                className="w-6 h-6 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-white/50 hover:bg-blue-500 hover:text-white transition-all"
+                                aria-label="Добавить задачу"
+                              >
+                                <Plus className="w-3 h-3" />
+                              </button>
+                            </div>
+                            <div className="space-y-1 flex-1 overflow-y-auto">
+                              <SortableContext
+                                key={`${dayKey}:grid:${dayIncompleteIds.join('|')}`}
+                                items={dayIncompleteIds}
+                                strategy={verticalListSortingStrategy}
+                              >
+                                {dayIncomplete.map(task => (
+                                  <SortableTaskItem
+                                    key={task.id}
+                                    id={String(task.id)}
+                                    containerId={dayKey}
+                                    task={task}
+                                    isExpanded={expandedTaskId === task.id}
+                                    onToggleExpand={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
+                                    onToggleComplete={() => toggleTask(task)}
+                                    onDelete={() => deleteTask(String(task.id))}
+                                    onMoveToTomorrow={() => moveTaskToTomorrow(task)}
+                                    onMoveToYesterday={() => moveTaskToYesterday(task)}
+                                    onMoveToDate={() => handleOpenDatePicker(task)}
+                                    onUpdateTitle={(title) => updateTaskTitle(String(task.id), title)}
+                                    onAddCheckpoint={(text) => addCheckpoint(task, text)}
+                                    onToggleCheckpoint={(cpId) => toggleCheckpoint(task, cpId)}
+                                    onDeleteCheckpoint={(cpId) => deleteCheckpoint(task, cpId)}
+                                    onUpdateCheckpoint={(cpId, text) => updateCheckpoint(task, cpId, text)}
+                                    compact
+                                  />
+                                ))}
+                              </SortableContext>
+                              {dayCompleted.length > 0 && (
+                                <div className="space-y-1">
+                                  {dayCompleted.slice(0, 2).map(task => (
+                                    <div key={task.id} className="opacity-50 hover:opacity-80 transition-opacity">
+                                      <TaskItem
+                                        task={task}
+                                        isExpanded={false}
+                                        onToggleExpand={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
+                                        onToggleComplete={() => toggleTask(task)}
+                                        onDelete={() => deleteTask(String(task.id))}
+                                        onMoveToTomorrow={() => moveTaskToTomorrow(task)}
+                                        onMoveToYesterday={() => moveTaskToYesterday(task)}
+                                        onMoveToDate={() => handleOpenDatePicker(task)}
+                                        onUpdateTitle={(title) => updateTaskTitle(String(task.id), title)}
+                                        onAddCheckpoint={(text) => addCheckpoint(task, text)}
+                                        onToggleCheckpoint={(cpId) => toggleCheckpoint(task, cpId)}
+                                        onDeleteCheckpoint={(cpId) => deleteCheckpoint(task, cpId)}
+                                        onUpdateCheckpoint={(cpId, text) => updateCheckpoint(task, cpId, text)}
+                                        compact
+                                      />
+                                    </div>
+                                  ))}
+                                  {dayCompleted.length > 2 && (
+                                    <div className="text-xs text-slate-400 dark:text-white/40 text-center">
+                                      +{dayCompleted.length - 2} ещё
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              {!hasTasks && (
+                                <div className="rounded-lg border border-dashed border-slate-200 dark:border-white/10 p-2 text-center text-xs text-slate-400 dark:text-white/30">
+                                  Пусто
+                                </div>
+                              )}
+                            </div>
+                          </DroppableContainer>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {!weekTasksLoading && weekTasks.length === 0 && (
+                <div className="text-center py-16 animate-fade-in">
+                  <div className="w-20 h-20 bg-slate-200 dark:bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-4">
+                    <CalendarIcon className="w-10 h-10 text-slate-400 dark:text-white/20" />
+                  </div>
+                  <h3 className="text-slate-600 dark:text-white/60 text-lg font-medium mb-2">Нет задач на эти недели</h3>
+                  <p className="text-slate-400 dark:text-white/40 text-sm">Добавьте задачу, нажав + в колонке дня</p>
+                </div>
+              )}
+            </div>
+            <DragOverlay dropAnimation={null}>{renderDragOverlay()}</DragOverlay>
+          </DndContext>
+        ) : isWeekView ? (
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}

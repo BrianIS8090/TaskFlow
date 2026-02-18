@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { format, startOfWeek, endOfWeek } from 'date-fns';
+import { format, startOfWeek, endOfWeek, addDays } from 'date-fns';
 import type { Task } from '../types';
 import { mockTaskRepository } from '../services/mockTasks';
 import { createFirebaseRepository } from '../services/firebaseTasks';
@@ -10,7 +10,7 @@ type MonthKey = {
   month: number;
 };
 
-export function useWeekTasks(anchorDate: Date) {
+export function useWeekTasks(anchorDate: Date, weeks: number = 1) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loadedRange, setLoadedRange] = useState('');
   const { user } = useAuth();
@@ -27,8 +27,8 @@ export function useWeekTasks(anchorDate: Date) {
     [anchorDate]
   );
   const weekEnd = useMemo(
-    () => endOfWeek(anchorDate, { weekStartsOn: 1 }),
-    [anchorDate]
+    () => endOfWeek(addDays(weekStart, (weeks - 1) * 7), { weekStartsOn: 1 }),
+    [weekStart, weeks]
   );
 
   const rangeStart = format(weekStart, 'yyyy-MM-dd');
@@ -37,10 +37,14 @@ export function useWeekTasks(anchorDate: Date) {
   const monthsToLoad = useMemo<MonthKey[]>(() => {
     const startMonth = { year: weekStart.getFullYear(), month: weekStart.getMonth() };
     const endMonth = { year: weekEnd.getFullYear(), month: weekEnd.getMonth() };
-    if (startMonth.year === endMonth.year && startMonth.month === endMonth.month) {
-      return [startMonth];
+    const months: MonthKey[] = [startMonth];
+    let current = new Date(weekStart.getFullYear(), weekStart.getMonth() + 1, 1);
+    const end = new Date(endMonth.year, endMonth.month, 1);
+    while (current <= end) {
+      months.push({ year: current.getFullYear(), month: current.getMonth() });
+      current = new Date(current.getFullYear(), current.getMonth() + 1, 1);
     }
-    return [startMonth, endMonth];
+    return months;
   }, [weekStart, weekEnd]);
 
   useEffect(() => {
