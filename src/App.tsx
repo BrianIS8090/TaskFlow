@@ -467,8 +467,8 @@ function App() {
       />
 
       <main className="flex-1 p-4 lg:p-8 relative overflow-y-auto">
-        {/* Заголовок для мобильной версии и табличного режима */}
-        <div className={`${isWeekGridView ? 'flex' : 'lg:hidden flex'} items-center justify-between mb-6`}>
+        {/* Заголовок для мобильной версии */}
+        <div className="lg:hidden flex items-center justify-between mb-6">
           <button 
             onClick={() => setIsMobileMenuOpen(true)}
             className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-700 dark:text-white"
@@ -501,7 +501,7 @@ function App() {
             {user?.displayName ? user.displayName[0].toUpperCase() : 'U'}
           </div>
         </div>
-        <div className={`${isWeekGridView ? 'flex' : 'lg:hidden flex'} justify-center mb-6`}>
+        <div className="lg:hidden flex justify-center mb-6">
           <div className="flex items-center gap-1 rounded-xl bg-slate-200/70 dark:bg-white/10 p-1">
             <button
               onClick={() => handleViewModeChange('day')}
@@ -536,8 +536,8 @@ function App() {
           </div>
         </div>
 
-        {/* Заголовок даты (скрыт в табличном режиме — навигация в мобильном хедере) */}
-        <div className={`hidden ${isWeekGridView ? '' : 'lg:block'} mb-8 animate-fade-in`}>
+        {/* Заголовок даты */}
+        <div className="hidden lg:block mb-8 animate-fade-in">
           <div className="flex items-center justify-center gap-10 mb-1">
             <button
               onClick={handlePrevDate}
