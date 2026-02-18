@@ -1,4 +1,5 @@
 import type { Task, TaskRepository } from '../types';
+import { BACKLOG_DATE } from '../types';
 
 class MockTaskRepository implements TaskRepository {
   private tasks: Record<string, Task[]> = {};
@@ -120,6 +121,10 @@ class MockTaskRepository implements TaskRepository {
     return () => {
       unsubscribes.forEach(unsub => unsub());
     };
+  }
+
+  onBacklogTasksChange(callback: (tasks: Task[]) => void): () => void {
+    return this.onTasksChange(BACKLOG_DATE, callback);
   }
 
   async getAllTasks(): Promise<Task[]> {

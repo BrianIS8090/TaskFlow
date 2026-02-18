@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, ChevronRight, Pencil, ArrowRight, ArrowLeft, Trash2, X, MoreVertical, Calendar } from 'lucide-react';
+import { Check, ChevronRight, Pencil, ArrowRight, ArrowLeft, Trash2, X, MoreVertical, Calendar, Inbox } from 'lucide-react';
 import type { Task } from '../../types';
 import { CheckpointsList } from './CheckpointsList';
 import { ConfirmDialog } from '../UI/ConfirmDialog';
@@ -19,6 +19,7 @@ export interface TaskItemProps {
   onToggleCheckpoint: (id: string | number) => void;
   onDeleteCheckpoint: (id: string | number) => void;
   onUpdateCheckpoint?: (id: string | number, text: string) => void;
+  onMoveToBacklog?: () => void;
   className?: string;
   onInteractionChange?: (isInteracting: boolean) => void;
   compact?: boolean;
@@ -38,6 +39,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   onToggleCheckpoint,
   onDeleteCheckpoint,
   onUpdateCheckpoint,
+  onMoveToBacklog,
   className,
   onInteractionChange,
   compact = false
@@ -114,10 +116,10 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           className={`flex-shrink-0 rounded-lg border-2 flex items-center justify-center transition-colors ${
             compact ? 'w-5 h-5 mt-0.5' : 'w-6 h-6 mt-1'
           } ${
-            task.completed 
-              ? 'bg-green-500/20 border-green-500' 
-              : hasIncompleteCheckpoints 
-                ? 'border-slate-200 dark:border-white/10 cursor-not-allowed opacity-50' 
+            task.completed
+              ? 'bg-green-500/20 border-green-500'
+              : hasIncompleteCheckpoints
+                ? 'border-slate-200 dark:border-white/10 cursor-not-allowed opacity-50'
                 : 'border-slate-300 dark:border-white/30 hover:border-blue-500'}`}
         >
           {task.completed && <Check className={`${compact ? 'w-3 h-3' : 'w-4 h-4'} text-green-500`} />}
@@ -191,13 +193,14 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           )}
 
           {isExpanded && !isEditing && (
-            <CheckpointsList 
+            <CheckpointsList
               checkpoints={task.checkpoints}
               onAdd={onAddCheckpoint}
               onToggle={onToggleCheckpoint}
               onDelete={onDeleteCheckpoint}
               onUpdate={onUpdateCheckpoint}
               onEditingStateChange={setIsCheckpointEditing}
+              compact={compact}
             />
           )}
         </div>
@@ -305,6 +308,18 @@ export const TaskItem: React.FC<TaskItemProps> = ({
                       <ArrowRight className="w-4 h-4" />
                       Перенести на день вперёд
                     </button>
+                    {onMoveToBacklog && (
+                      <button
+                        onClick={() => {
+                          setShowMobileMenu(false);
+                          onMoveToBacklog();
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-sm text-slate-600 dark:text-white/70 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-indigo-500 flex items-center gap-3 transition-colors"
+                      >
+                        <Inbox className="w-4 h-4" />
+                        В бэклог
+                      </button>
+                    )}
                   </>
                 )}
                 <button

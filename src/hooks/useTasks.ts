@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { differenceInCalendarDays, format } from 'date-fns';
 import type { Task, Checkpoint } from '../types';
+import { BACKLOG_DATE } from '../types';
 import { mockTaskRepository } from '../services/mockTasks';
 import { createFirebaseRepository } from '../services/firebaseTasks';
 import { useAuth } from '../context/useAuth';
@@ -98,13 +99,22 @@ export function useTasks(date: string) {
   };
 
   const moveTaskToDate = async (task: Task, targetDate: Date | string) => {
-    const currentDate = task.date ? new Date(task.date) : new Date(date);
     const normalizedTarget = typeof targetDate === 'string' ? new Date(targetDate) : targetDate;
+    const formattedDate = format(normalizedTarget, 'yyyy-MM-dd');
+    // Если задача из бэклога, сбрасываем postponeCount
+    if (task.date === BACKLOG_DATE) {
+      await repository.updateTask(String(task.id), {
+        date: formattedDate,
+        postponeCount: 0
+      });
+      return;
+    }
+    const currentDate = task.date ? new Date(task.date) : new Date(date);
     const dayDiff = differenceInCalendarDays(normalizedTarget, currentDate);
     const currentPostpone = task.postponeCount || 0;
     const nextPostpone = Math.max(currentPostpone + dayDiff, 0);
     await repository.updateTask(String(task.id), {
-      date: format(normalizedTarget, 'yyyy-MM-dd'),
+      date: formattedDate,
       postponeCount: nextPostpone
     });
   };
@@ -156,13 +166,18 @@ export function useTasks(date: string) {
         const updateData: Partial<Task> = { order: nextOrder };
 
         if (needsDateChange) {
-          const currentDate = task.date ? new Date(task.date) : new Date(date);
-          const normalizedTarget = typeof nextDate === 'string' ? new Date(nextDate) : nextDate;
-          const dayDiff = differenceInCalendarDays(normalizedTarget, currentDate);
-          const currentPostpone = task.postponeCount || 0;
-          const nextPostpone = Math.max(currentPostpone + dayDiff, 0);
           updateData.date = typeof nextDate === 'string' ? nextDate : format(nextDate, 'yyyy-MM-dd');
-          updateData.postponeCount = nextPostpone;
+          // Для бэклога сбрасываем postponeCount, иначе вычисляем разницу дней
+          if (nextDate === BACKLOG_DATE || task.date === BACKLOG_DATE) {
+            updateData.postponeCount = 0;
+          } else {
+            const currentDate = task.date ? new Date(task.date) : new Date(date);
+            const normalizedTarget = typeof nextDate === 'string' ? new Date(nextDate) : nextDate;
+            const dayDiff = differenceInCalendarDays(normalizedTarget, currentDate);
+            const currentPostpone = task.postponeCount || 0;
+            const nextPostpone = Math.max(currentPostpone + dayDiff, 0);
+            updateData.postponeCount = nextPostpone;
+          }
         }
 
         return repository.updateTask(String(task.id), updateData);

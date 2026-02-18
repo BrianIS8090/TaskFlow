@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import type { Task, TaskRepository } from '../types';
+import { BACKLOG_DATE } from '../types';
 
 class FirebaseTaskRepository implements TaskRepository {
   private userId: string;
@@ -100,6 +101,22 @@ class FirebaseTaskRepository implements TaskRepository {
       this.getCollection(),
       where('date', '>=', startDate),
       where('date', '<=', endDate)
+    );
+
+    return onSnapshot(q, (snapshot) => {
+      const tasks = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Task));
+      callback(tasks);
+    });
+  }
+
+  onBacklogTasksChange(callback: (tasks: Task[]) => void): () => void {
+    const q = query(
+      this.getCollection(),
+      where('date', '==', BACKLOG_DATE),
+      orderBy('order', 'asc')
     );
 
     return onSnapshot(q, (snapshot) => {
