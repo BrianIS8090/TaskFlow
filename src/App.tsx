@@ -38,7 +38,7 @@ function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [taskToMove, setTaskToMove] = useState<Task | null>(null);
-  const [viewMode, setViewMode] = useState<'day' | 'week' | 'week-grid'>('day');
+  const [viewMode, setViewMode] = useState<'day' | 'week-list' | 'week-grid'>('day');
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [addTaskDate, setAddTaskDate] = useState<Date | null>(null);
   const [dayTaskOrder, setDayTaskOrder] = useState<Task[]>([]);
@@ -52,7 +52,7 @@ function App() {
 
   const dateKey = format(dayDate, 'yyyy-MM-dd');
   const today = useMemo(() => startOfDay(new Date()), []);
-  const isWeekView = viewMode === 'week' || viewMode === 'week-grid';
+  const isWeekView = viewMode === 'week-list' || viewMode === 'week-grid';
   const isWeekGridView = viewMode === 'week-grid';
   const activeDate = isWeekView ? today : dayDate;
   const sensors = useSensors(
@@ -280,9 +280,9 @@ function App() {
     handleCloseAddTaskModal();
   };
 
-  const handleViewModeChange = (nextMode: 'day' | 'week' | 'week-grid') => {
+  const handleViewModeChange = (nextMode: 'day' | 'week-list' | 'week-grid') => {
     setViewMode(nextMode);
-    if (nextMode === 'week' || nextMode === 'week-grid') {
+    if (nextMode === 'week-list' || nextMode === 'week-grid') {
       setWeekAnchorDate(dayDate);
     }
   };
@@ -559,9 +559,9 @@ function App() {
               День
             </button>
             <button
-              onClick={() => handleViewModeChange('week')}
+              onClick={() => handleViewModeChange('week-list')}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                viewMode === 'week'
+                viewMode === 'week-list' || viewMode === 'week-grid'
                   ? 'bg-slate-900 text-white dark:bg-white/20 dark:text-white'
                   : 'text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white'
               }`}
@@ -636,9 +636,9 @@ function App() {
                 День
               </button>
               <button
-                onClick={() => handleViewModeChange('week')}
+                onClick={() => handleViewModeChange('week-list')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  viewMode === 'week'
+                  viewMode === 'week-list'
                     ? 'bg-slate-900 text-white dark:bg-white/20 dark:text-white'
                     : 'text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white'
                 }`}
@@ -934,6 +934,7 @@ function App() {
             <DragOverlay dropAnimation={null}>{renderDragOverlay()}</DragOverlay>
           </DndContext>
         ) : isWeekView ? (
+          // Неделя (список) - вертикальное отображение
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -944,9 +945,9 @@ function App() {
           >
             <div className="space-y-6">
               {weekTasksLoading && weekTasks.length === 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {Array.from({ length: 7 }).map((_, index) => (
-                    <div key={index} className="glass rounded-2xl h-32 animate-pulse" />
+                    <div key={index} className="glass rounded-2xl h-24 animate-pulse" />
                   ))}
                 </div>
               ) : (
@@ -958,33 +959,52 @@ function App() {
                     const dayIncompleteIds = dayIncomplete.map(task => String(task.id));
                     const dayCompleted = dayTasks.filter(task => task.completed);
                     const hasTasks = dayIncomplete.length > 0 || dayCompleted.length > 0;
+                    const isTodayDate = isToday(day);
 
                     return (
-                      <DroppableContainer
-                        key={dayKey}
-                        id={dayKey}
-                        className="glass rounded-2xl p-3 flex flex-col gap-3 min-h-[140px]"
-                      >
-                        <div className="flex items-center justify-between px-1">
-                          <div>
-                            <div className="text-sm font-semibold text-slate-700 dark:text-white/80 capitalize">
-                              {format(day, 'EEEE', { locale: ru })}
+                      <div key={dayKey} className="glass rounded-xl p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center ${
+                              isTodayDate 
+                                ? 'bg-blue-500 text-white' 
+                                : 'bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-white/80'
+                            }`}>
+                              <span className="text-xs font-semibold capitalize">
+                                {format(day, 'EEE', { locale: ru })}
+                              </span>
+                              <span className="text-lg font-bold">
+                                {format(day, 'd')}
+                              </span>
                             </div>
-                            <div className="text-xs text-slate-400 dark:text-white/40">
-                              {format(day, 'd MMM', { locale: ru })}
+                            <div>
+                              <h3 className={`font-semibold ${
+                                isTodayDate 
+                                  ? 'text-blue-600 dark:text-blue-400' 
+                                  : 'text-slate-700 dark:text-white/80'
+                              }`}>
+                                {isTodayDate ? 'Сегодня' : format(day, 'd MMMM', { locale: ru })}
+                              </h3>
+                              <p className="text-sm text-slate-500 dark:text-white/50">
+                                {dayIncomplete.length} задач{dayCompleted.length > 0 && `, ${dayCompleted.length} выполнено`}
+                              </p>
                             </div>
                           </div>
                           <button
                             onClick={() => handleOpenAddTaskModal(day)}
-                            className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-600 dark:text-white/60 hover:bg-slate-300 dark:hover:bg-white/15 hover:text-slate-900 dark:hover:text-white transition-all"
+                            className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-500 dark:text-white/50 hover:bg-blue-500 hover:text-white transition-all"
                             aria-label="Добавить задачу"
                           >
                             <Plus className="w-4 h-4" />
                           </button>
                         </div>
-                        <div className="space-y-2">
+                        
+                        <DroppableContainer
+                          id={dayKey}
+                          className="space-y-2 min-h-[40px]"
+                        >
                           <SortableContext
-                            key={`${dayKey}:${dayIncompleteIds.join('|')}`}
+                            key={`${dayKey}:list:${dayIncompleteIds.join('|')}`}
                             items={dayIncompleteIds}
                             strategy={verticalListSortingStrategy}
                           >
@@ -1009,51 +1029,22 @@ function App() {
                               />
                             ))}
                           </SortableContext>
+                          
                           {dayCompleted.length > 0 && (
-                            <div className="space-y-2">
-                              <div className="text-xs uppercase tracking-wider text-slate-400 dark:text-white/40 px-2">
-                                Выполнено
-                              </div>
-                              {dayCompleted.map(task => (
-                                <div key={task.id} className="opacity-60 hover:opacity-100 transition-opacity">
-                                  <TaskItem
-                                    task={task}
-                                    isExpanded={expandedTaskId === task.id}
-                                    onToggleExpand={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
-                                    onToggleComplete={() => toggleTask(task)}
-                                    onDelete={() => deleteTask(String(task.id))}
-                                    onMoveToTomorrow={() => moveTaskToTomorrow(task)}
-                                    onMoveToYesterday={() => moveTaskToYesterday(task)}
-                                    onMoveToDate={() => handleOpenDatePicker(task)}
-                                    onUpdateTitle={(title) => updateTaskTitle(String(task.id), title)}
-                                    onAddCheckpoint={(text) => addCheckpoint(task, text)}
-                                    onToggleCheckpoint={(cpId) => toggleCheckpoint(task, cpId)}
-                                    onDeleteCheckpoint={(cpId) => deleteCheckpoint(task, cpId)}
-                                    onUpdateCheckpoint={(cpId, text) => updateCheckpoint(task, cpId, text)}
-                                  />
-                                </div>
-                              ))}
+                            <div className="mt-2 pt-2 border-t border-slate-200 dark:border-white/10">
+                              <p className="text-xs text-slate-400 dark:text-white/40 mb-2">Выполнено: {dayCompleted.length}</p>
                             </div>
                           )}
+                          
                           {!hasTasks && (
-                            <div className="rounded-2xl border border-dashed border-slate-200 dark:border-white/10 p-3 text-center text-xs text-slate-400 dark:text-white/40">
+                            <div className="rounded-lg border border-dashed border-slate-200 dark:border-white/10 p-4 text-center text-sm text-slate-400 dark:text-white/30">
                               Нет задач
                             </div>
                           )}
-                        </div>
-                      </DroppableContainer>
+                        </DroppableContainer>
+                      </div>
                     );
                   })}
-                </div>
-              )}
-
-              {!weekTasksLoading && weekTasks.length === 0 && (
-                <div className="text-center py-16 animate-fade-in">
-                  <div className="w-20 h-20 bg-slate-200 dark:bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-4">
-                    <CalendarIcon className="w-10 h-10 text-slate-400 dark:text-white/20" />
-                  </div>
-                  <h3 className="text-slate-600 dark:text-white/60 text-lg font-medium mb-2">Нет задач на этой неделе</h3>
-                  <p className="text-slate-400 dark:text-white/40 text-sm">Добавьте первую задачу выше</p>
                 </div>
               )}
             </div>

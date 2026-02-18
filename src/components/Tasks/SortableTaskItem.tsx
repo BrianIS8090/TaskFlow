@@ -7,12 +7,14 @@ import type { TaskItemProps } from './TaskItem';
 interface SortableTaskItemProps extends TaskItemProps {
   id: string | number;
   containerId: string;
+  compact?: boolean;
 }
 
 export const SortableTaskItem: React.FC<SortableTaskItemProps> = ({
   id,
   containerId,
   className,
+  compact,
   ...props
 }) => {
   const [isInteractionLocked, setIsInteractionLocked] = useState(false);
@@ -51,6 +53,7 @@ export const SortableTaskItem: React.FC<SortableTaskItemProps> = ({
     >
       <TaskItem
         {...props}
+        compact={compact}
         className={itemClassName}
         onInteractionChange={handleInteractionChange}
       />
