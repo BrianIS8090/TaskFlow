@@ -73,7 +73,7 @@ function App() {
     loading: tasksLoading,
     reorderTasks
   } = useTasks(dateKey);
-  const numWeeks = isWeekGridView ? 2 : 1;
+  const numWeeks = isWeekGridView ? 4 : 1;
   const { tasks: weekTasks, loading: weekTasksLoading } = useWeekTasks(weekAnchorDate, numWeeks);
 
   // 1. Состояние загрузки (проверка авторизации)
@@ -629,7 +629,7 @@ function App() {
             <div className="space-y-6">
               {weekTasksLoading && weekTasks.length === 0 ? (
                 <div className="space-y-4">
-                  {[0, 1].map(row => (
+                  {Array.from({ length: numWeeks }, (_, row) => (
                     <div key={row} className="grid grid-cols-7 gap-2">
                       {Array.from({ length: 7 }).map((_, index) => (
                         <div key={index} className="glass rounded-xl h-40 animate-pulse" />
@@ -639,7 +639,7 @@ function App() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {[0, 1].map(weekIndex => (
+                  {Array.from({ length: numWeeks }, (_, weekIndex) => (
                     <div key={weekIndex} className="grid grid-cols-7 gap-2">
                       {weekDays.slice(weekIndex * 7, (weekIndex + 1) * 7).map((day) => {
                         const dayKey = format(day, 'yyyy-MM-dd');

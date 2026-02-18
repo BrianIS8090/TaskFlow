@@ -37,10 +37,14 @@ export function useWeekTasks(anchorDate: Date, weeks: number = 1) {
   const monthsToLoad = useMemo<MonthKey[]>(() => {
     const startMonth = { year: weekStart.getFullYear(), month: weekStart.getMonth() };
     const endMonth = { year: weekEnd.getFullYear(), month: weekEnd.getMonth() };
-    if (startMonth.year === endMonth.year && startMonth.month === endMonth.month) {
-      return [startMonth];
+    const months: MonthKey[] = [startMonth];
+    let current = new Date(weekStart.getFullYear(), weekStart.getMonth() + 1, 1);
+    const end = new Date(endMonth.year, endMonth.month, 1);
+    while (current <= end) {
+      months.push({ year: current.getFullYear(), month: current.getMonth() });
+      current = new Date(current.getFullYear(), current.getMonth() + 1, 1);
     }
-    return [startMonth, endMonth];
+    return months;
   }, [weekStart, weekEnd]);
 
   useEffect(() => {
