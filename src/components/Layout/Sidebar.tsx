@@ -13,14 +13,16 @@ interface SidebarProps {
   isMobileOpen: boolean;
   onCloseMobile: () => void;
   onSearchOpen: () => void;
+  forceCollapse?: boolean;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ 
-  selectedDate, 
-  onDateSelect, 
-  isMobileOpen, 
+export const Sidebar: React.FC<SidebarProps> = ({
+  selectedDate,
+  onDateSelect,
+  isMobileOpen,
   onCloseMobile,
-  onSearchOpen
+  onSearchOpen,
+  forceCollapse
 }) => {
   const [calendarDate, setCalendarDate] = useState(new Date(2026, 1, 1));
   const [showLogin, setShowLogin] = useState(false);
@@ -43,18 +45,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <>
       {showLogin && <LoginForm onClose={() => setShowLogin(false)} />}
       
-      {/* Мобильная подложка */}
+      {/* Подложка (мобильная или при forceCollapse) */}
       {isMobileOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+        <div
+          className={`fixed inset-0 bg-black/50 z-40 ${forceCollapse ? '' : 'lg:hidden'}`}
           onClick={onCloseMobile}
         />
       )}
 
       <aside className={`
-        fixed lg:sticky top-0 left-0 z-50 h-screen w-80 
+        fixed ${forceCollapse ? '' : 'lg:sticky'} top-0 left-0 z-50 h-screen w-80
         glass transform transition-transform duration-300 ease-out flex-shrink-0
-        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        ${isMobileOpen ? 'translate-x-0' : forceCollapse ? '-translate-x-full' : '-translate-x-full lg:translate-x-0'}
       `}>
         <div className="p-6 h-full flex flex-col overflow-y-auto">
           {/* Логотип и пользователь */}

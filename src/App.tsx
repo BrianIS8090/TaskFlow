@@ -457,17 +457,18 @@ function App() {
         <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-500/10 dark:bg-purple-500/5 rounded-full blur-3xl"></div>
       </div>
 
-      <Sidebar 
+      <Sidebar
         selectedDate={activeDate}
         onDateSelect={handleDateSelect}
         isMobileOpen={isMobileMenuOpen}
         onCloseMobile={() => setIsMobileMenuOpen(false)}
         onSearchOpen={() => setIsSearchOpen(true)}
+        forceCollapse={isWeekGridView}
       />
 
       <main className="flex-1 p-4 lg:p-8 relative overflow-y-auto">
-        {/* Заголовок для мобильной версии */}
-        <div className="lg:hidden flex items-center justify-between mb-6">
+        {/* Заголовок для мобильной версии и табличного режима */}
+        <div className={`${isWeekGridView ? 'flex' : 'lg:hidden flex'} items-center justify-between mb-6`}>
           <button 
             onClick={() => setIsMobileMenuOpen(true)}
             className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-white/10 flex items-center justify-center text-slate-700 dark:text-white"
